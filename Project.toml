@@ -1,0 +1,20 @@
+name = "EtFsp"
+uuid = "1785c143-4357-4f1f-be49-5c4bc10f803a"
+authors = ["Huy D. Vo <vdhuy91@gmail.com> and contributors"]
+version = "0.1.0"
+
+[deps]
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
