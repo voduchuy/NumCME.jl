@@ -85,8 +85,7 @@ function solve(model::CmeModel,
 
         fspprob = ODEProblem(odefun!, uₙ, tspan)    
         solutions = Sundials.solve(fspprob, fspalgorithm.ode_method, atol = odeatol, rtol = odertol, saveat=saveat)
-            
+
     end
     return outputs 
-end
 end
