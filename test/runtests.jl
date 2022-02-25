@@ -1,6 +1,10 @@
 using EtFsp
 using Test
 
-@testset "EtFsp.jl" begin
-    # Write your tests here.
+@testset "StateSpace" begin
+    include("test_statespace.jl")    
+end
+
+@testset "FspMatrix" begin 
+    include("test_fspmat.jl")
 end
