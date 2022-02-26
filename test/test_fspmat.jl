@@ -61,8 +61,7 @@ expand!(𝔛, 20)
 𝐩₀ = [1.0;zeros(Float64, size(𝐀, 1) - 1)]
 tspan = (0.0, 120.0)
 function fsprhs!(du, u, θ, t)
-    matvec!(t, 𝐀, u, du)
-    # du[:] = 𝐀(t)*u 
+    matvec!(t, 𝐀, u, du)    
     nothing 
 end
 fspprob = ODEProblem(fsprhs!, 𝐩₀, tspan)
