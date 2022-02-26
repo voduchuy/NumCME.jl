@@ -14,15 +14,15 @@ end
 function FspSparseVector(states::Vector{MVector{NS, IntT}}, values::Vector{RealT};checksizes::Bool=true) where {NS, IntT<:Integer, RealT <: AbstractFloat}
     checksizes && (length(states) ≠ length(values)) && throw(ArgumentError("State and value lists must have equal lengths."))
     return FspSparseVector{NS, IntT, RealT}(
-        states=states,
-        values=values,
+        states=deepcopy(states),
+        values=deepcopy(values),
         state2idx=Dict([x=>i for (i,x) in enumerate(states)])
     )
 end
 
 function FspSparseVector{RealT}(statespace::AbstractSparseStateSpace{NS, NR, IntT}, statevalpairs::Vector{Pair{VecT, RealT}}) where {NS, NR, IntT <: Integer, VecT <: AbstractVector, RealT <: AbstractFloat}
-    states = statespace.states 
-    state2idx = statespace.state2idx
+    states = deepcopy(statespace.states) 
+    state2idx = deepcopy(statespace.state2idx)
     values = zeros(RealT, get_state_count(statespace))
     for (x,v) in statevalpairs
         idx = get(state2idx, x, 0)
@@ -33,6 +33,10 @@ function FspSparseVector{RealT}(statespace::AbstractSparseStateSpace{NS, NR, Int
         values=values,
         state2idx=state2idx 
     )
+end
+
+function FspSparseVector(statespace::AbstractSparseStateSpace{NS, NR, IntT}, statevalpairs::Vector{Pair{VecT, Float64}}) where {NS, NR, IntT <: Integer, VecT <: AbstractVector}
+    return FspSparseVector{Float64}(statespace, statevalpairs)
 end
 
 function Base.sum(p::FspSparseVector)
