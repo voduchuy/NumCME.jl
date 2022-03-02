@@ -1,36 +1,30 @@
-export FspSolveOutput, FspSolveOutputSlice
+export SparseFspOutput, SparseFspOutputSlice
 
-Base.@kwdef struct FspSolveOutput{NS,IntT<:Integer,RealT<:AbstractFloat}
+Base.@kwdef struct SparseFspOutput{NS,IntT<:Integer,RealT<:AbstractFloat}
     t::Vector{RealT}
-    p::Vector{FspSparseVector{NS,IntT,RealT}}
+    p::Vector{SparseMultIdxVector{NS,IntT,RealT}}
     sinks::Vector{Vector{RealT}}
-
-    function FspSolveOutput{NS, IntT, RealT}(;t = Vector{RealT}(),
-        p = Vector{FspSparseVector{NS, IntT, RealT}}(),
-        sinks = Vector{Vector{RealT}}()) where {NS, IntT <: Integer, RealT <: AbstractFloat}    
-            new(t, p, sinks)        
-    end
 end
 
-struct FspSolveOutputSlice
+struct SparseFspOutputSlice
     t::AbstractFloat 
-    p::FspSparseVector
+    p::SparseMultIdxVector
     sinks::Vector
 end
 
-function FspSolveOutput{NS}() where {NS, IntT <: Integer, RealT <: AbstractFloat}
-    return FspSolveOutput{NS, Int64, Float64}(
+function SparseFspOutput{NS}() where {NS, IntT <: Integer, RealT <: AbstractFloat}
+    return SparseFspOutput{NS, Int64, Float64}(
         t = Vector{Float64}(),
-        p = Vector{FspSparseVector{NS, IntT, RealT}}(),
+        p = Vector{SparseMultIdxVector{NS, IntT, RealT}}(),
         sinks = Vector{Vector{RealT}}()
     )
 end
 
-function Base.getindex(fspoutput::FspSolveOutput, ind::Integer)
+function Base.getindex(fspoutput::SparseFspOutput, ind::Integer)
     if ind > length(fspoutput.t)
         throw(ArgumentError("Requested index exceeds array limit."))
     end
-    return FspSolveOutputSlice(
+    return SparseFspOutputSlice(
         fspoutput.t[ind],
         fspoutput.p[ind],
         fspoutput.sinks[ind]
@@ -38,13 +32,26 @@ function Base.getindex(fspoutput::FspSolveOutput, ind::Integer)
     return 
 end
 
-function Base.getindex(fspoutput::FspSolveOutput, inds::Vector{T}) where {T <: Integer}    
+function Base.getindex(fspoutput::SparseFspOutput, inds::Vector{T}) where {T <: Integer}    
     return [fspoutput[i] for i in inds]    
 end
 
-function Base.length(fspoutput::FspSolveOutput)
+function Base.lastindex(fspoutput::SparseFspOutput)
+    return lastindex(fspoutput.t)
+end
+
+function Base.length(fspoutput::SparseFspOutput)
     return length(fspoutput.t)
 end
-function Base.size(fspoutput::FspSolveOutput)
+function Base.size(fspoutput::SparseFspOutput)
     return size(fspoutput.t)
+end
+
+using Printf 
+function Base.show(io::IO, outputslice::SparseFspOutputSlice)
+    println(io, "FSP solution output slice:")
+    @printf(io, "t = %.2e \n", outputslice.t)
+    println(io, "sinks = $(outputslice.sinks)")
+    @printf(io, "p = \n")
+    show(outputslice.p)    
 end
