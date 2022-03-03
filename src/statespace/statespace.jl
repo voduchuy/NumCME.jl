@@ -1,6 +1,6 @@
 using DataStructures: Deque
 
-export AbstractStateSpace, AbstractSparseStateSpace, SparseStateSpace, expand!, get_state_count, get_sink_count
+export AbstractStateSpace, AbstractSparseStateSpace, SparseStateSpace, expand!, deleteat!, get_state_count, get_sink_count, get_stoich_matrix, get_statedict, get_stateconnectivity, get_sinkconnectivity
 
 """
 Abstract type for FSP state space. This is the supertype of all concrete FSP state space implementations.
@@ -42,21 +42,32 @@ get_stoich_matrix(space::SparseStateSpace) = space.stoich_matrix
 
 Return number of states.
 """
-get_state_count(statespace::AbstractStateSpace) = length(statespace.states)
+get_state_count(statespace::SparseStateSpace) = length(statespace.states)
 
 """
 `get_sink_count(statespace::AbstractStateSpace)`
 
 Return number of sinks. 
 """
-get_sink_count(statespace::AbstractStateSpace) = statespace.sink_count
+get_sink_count(statespace::SparseStateSpace) = statespace.sink_count
 
 """
 `get_states(statespace::AbstractSparseStateSpace)`
 
-Return  
+Return list of states.
 """
-get_states(statespace::AbstractStateSpace) = statespace.states 
+get_states(statespace::SparseStateSpace) = statespace.states
+
+"""
+`get_statedict(statespace::SparseStateSpace)`
+
+Return state dictionary.
+"""
+get_statedict(statespace::SparseStateSpace) = statespace.state2idx
+
+get_stateconnectivity(statespace::SparseStateSpace) = statespace.state_connectivity
+
+get_sinkconnectivity(statespace::SparseStateSpace) = statespace.sink_connectivity
 
 
 """
@@ -83,11 +94,8 @@ function SparseStateSpace(stoich_matrix::Matrix{IntT}, initstates::Vector) where
         sink_connectivity = sink_connectivity,
     )
 
-    for eachstate in initstates
-        _addstates!(fspstatespace, MVector{species_count,IntT}(eachstate))
-    end
-
-    return fspstatespace
+    _addstates!(fspstatespace, initstates)
+    fspstatespace
 end
 
 """
@@ -111,35 +119,37 @@ function expand!(statespace::SparseStateSpace{NS,NR,IntT}, expansionlevel::Integ
     # Reference to mutable fields within stateset
     stoich_matrix = statespace.stoich_matrix
     states = statespace.states # Array of states 
-    state2idx = statespace.state2idx # Dictionary of states
     sink_connectivity = statespace.sink_connectivity
 
     reaction_count = size(stoich_matrix, 2)
     expandreactions = isempty(onlyreactions) ? (1:reaction_count) : onlyreactions
 
-    explorables = Deque{MVector{2,IntT}}() # State exploration queue    
+    explorables = Deque{IntT}()
     for idx in 1:length(states)
         for ir in expandreactions
             if sink_connectivity[idx][ir] != 0
-                push!(explorables, [idx, 0])
+                push!(explorables, idx)
                 break
             end
         end
     end
 
-    while !isempty(explorables)
-        # Pop out an explorable state to explore         
-        (idx, level) = popfirst!(explorables)
-
-        (level < expansionlevel) && for stoichvec in eachcol(stoich_matrix[:, expandreactions])
-            candidate = states[idx] .+ stoichvec
-            if is_all_nonnegative_(candidate)
-                # Look up candidate state in the state dictionary. If the candidate does not exist in the dictionary, proceed to add it to the state list and update the parent state's connectivity.
-                if get(state2idx, candidate, 0) == 0
-                    _addstates!(statespace, MVector{NS,IntT}(candidate))
-                    push!(explorables, [length(states), level + 1])
-                end
+    candidate_states = Vector{MVector{NS,IntT}}()
+    for level in 1:expansionlevel
+        resize!(candidate_states, length(explorables) * length(expandreactions))
+        i = 1
+        while !isempty(explorables)
+            idx = pop!(explorables)
+            @simd for ir in expandreactions
+                candidate_states[i] = states[idx] .+ stoich_matrix[:, ir]
+                i += 1
             end
+        end
+        statecount_old = length(states)
+        _addstates!(statespace, candidate_states)
+        statecount = length(states)
+        for idx in statecount_old+1:statecount
+            push!(explorables, idx)
         end
     end
     nothing
@@ -150,36 +160,53 @@ end
 
 Helper function. Returns `true` if all elements of a vector is positive. Otherwise returns `false`.
 """
-function is_all_nonnegative_(x::AbstractVector)::Bool
+function _is_all_nonnegative(x::AbstractVector)::Bool
     for xi in x
         xi < 0 && return false
     end
-    return true
+    true
 end
 
 """
 Helper function to add a state vector `newstate` to the current state space `statespace`.
 If `newstate` is already included in `statespace`, this function will return without modifying any of the input arguments.
 """
-function _addstates!(statespace::SparseStateSpace{NS,NR,IntT}, newstate::MVector{NS,IntT}) where {NS,NR,IntT<:Integer}
-
-    states = statespace.states
-    state2idx = statespace.state2idx
-    num_sinks = statespace.sink_count
-    stoich_matrix = statespace.stoich_matrix
-    state_connectivity = statespace.state_connectivity
-    sink_connectivity = statespace.sink_connectivity
-
+function _addstates!(statespace::SparseStateSpace{NS,NR,IntT}, newstates::Vector{VT}) where {NS,NR,IntT<:Integer,VT<:Union{Vector{IntT},MVector{NS,IntT}}}
+    states = get_states(statespace)
+    state2idx = get_statedict(statespace)
+    num_sinks = get_sink_count(statespace)
+    stoich_matrix = get_stoich_matrix(statespace)
+    state_connectivity = get_stateconnectivity(statespace)
+    sink_connectivity = get_sinkconnectivity(statespace)
     reaction_count = size(stoich_matrix, 2)
-    if get(state2idx, newstate, 0) == 0
-        newidx = length(states) + 1
-        push!(states, newstate)
-        state2idx[newstate] = newidx
 
-        # Determine connectivity between states         
-        push!(state_connectivity, zeros(IntT, reaction_count))
+    unique_newstates = Vector{MVector{NS,IntT}}()
+    sizehint!(unique_newstates, length(newstates))
+    newidx = length(states)
+    for state in newstates
+        if get(state2idx, state, 0) == 0 && _is_all_nonnegative(state)
+            newidx += 1
+            push!(unique_newstates, state)
+            state2idx[state] = newidx
+        end
+    end
+
+    statecount_old = length(states)
+    added_state_count = length(unique_newstates)
+    append!(states, unique_newstates)
+    resize!(state_connectivity, statecount_old + added_state_count)
+    resize!(sink_connectivity, statecount_old + added_state_count)
+    statecount = length(states)
+
+    @simd for newidx in statecount_old+1:statecount
+        state_connectivity[newidx] = zeros(IntT, reaction_count)
+        sink_connectivity[newidx] = zeros(IntT, reaction_count)
+    end
+
+    @simd for newidx in statecount_old+1:statecount 
+        # Determine connectivity between states                 
         for ir = 1:reaction_count
-            reachablestate = newstate - stoich_matrix[:, ir]
+            reachablestate = states[newidx] - stoich_matrix[:, ir]
             ridx = get(state2idx, reachablestate, 0)
             if ridx ≠ 0
                 state_connectivity[newidx][ir] = ridx
@@ -188,18 +215,75 @@ function _addstates!(statespace::SparseStateSpace{NS,NR,IntT}, newstate::MVector
         end
 
         # Determine states that can transit outside of the current truncated state space                
-        push!(sink_connectivity, zeros(Bool, num_sinks))
         for ir = 1:reaction_count
-            reachablestate = newstate + stoich_matrix[:, ir]
-            if !(is_all_nonnegative_(reachablestate))
-                continue
-            end
-            ridx = get(state2idx, reachablestate, 0)
-            if ridx == 0
-                sink_connectivity[newidx][ir] = ir
-            else
-                state_connectivity[ridx][ir] = newidx
+            reachablestate = states[newidx] + stoich_matrix[:, ir]
+            if _is_all_nonnegative(reachablestate)
+                ridx = get(state2idx, reachablestate, 0)
+                if ridx == 0
+                    sink_connectivity[newidx][ir] = ir
+                else
+                    state_connectivity[ridx][ir] = newidx
+                end
             end
         end
     end
+end
+
+import Base: deleteat!
+
+function deleteat!(statespace::SparseStateSpace, ids::Vector{T}) where {T<:Integer}
+    stoich_matrix = get_stoich_matrix(statespace)
+    reaction_count = size(stoich_matrix, 2)
+    statecount_old = get_state_count(statespace)
+    ids = unique(ids)
+
+    # Map from current indices to new indices when the targeted states are removed
+    newidxs = Vector{T}(1:statecount_old)
+    newidxs[ids] .= 0
+    idx = 1
+    for i in 1:statecount_old
+        if newidxs[i] ≠ 0
+            newidxs[i] = idx
+            idx += 1
+        end
+    end
+
+    # Remove target states from member state list
+    states = get_states(statespace)
+    state2idx = get_statedict(statespace)
+    state_connectivity = get_stateconnectivity(statespace)
+    sink_connectivity = get_sinkconnectivity(statespace)
+
+    for idx in ids
+        delete!(state2idx, states[idx])
+    end
+    deleteat!(states, ids)
+    deleteat!(state_connectivity, ids)
+    deleteat!(sink_connectivity, ids)
+
+    if length(states) == 0
+        return nothing
+    end
+    # Reindexing
+    reachablestate = similar(states[1])
+    @simd for i in 1:length(states)
+        eachstate = states[i]
+        state2idx[eachstate] = newidxs[state2idx[eachstate]]
+        for ir in 1:reaction_count
+            state_connectivity[i][ir] = (oldidx = state_connectivity[i][ir]) ≠ 0 ? newidxs[oldidx] : 0
+        end
+    end
+    @simd for i in 1:length(states)
+        eachstate = states[i]
+        for ir in 1:reaction_count
+            if sink_connectivity[i][ir] == 0
+                copyto!(reachablestate, eachstate)
+                axpy!(1, stoich_matrix[:, ir], reachablestate)
+                if _is_all_nonnegative(reachablestate) && (get(state2idx, reachablestate, 0) == 0)
+                    sink_connectivity[i][ir] = ir
+                end
+            end
+        end
+    end
+    nothing
 end

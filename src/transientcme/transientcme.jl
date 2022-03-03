@@ -65,42 +65,47 @@ function solve(model::CmeModel,
     adapter = fspalgorithm.space_adapter
 
     p0 = deepcopy(initial_distribution.values)
-    𝔛 = SparseStateSpace(model.stoich_matrix, initial_distribution.states)
-    sink_count = get_sink_count(𝔛)
-    init!(𝔛, adapter, p0, tstart, fsptol)
+    statespace = SparseStateSpace(model.stoich_matrix, initial_distribution.states)
+    sink_count = get_sink_count(statespace)
+    init!(statespace, adapter, p0, tstart, fsptol)
 
     tnow = tstart
     unow = [p0; zeros(sink_count)]
-    A = FspMatrixSparse{RealT}(𝔛, model.propensities, θ = θ)
-
-    # Set up callback for checking the growth of FSP error over time
-    fsprhs!(du, u, θ, t) = matvec!(du, t, A, u)
-    affect!(integrator) = DE.terminate!(integrator)
-    function fsp_error_constraint(u, t, integrator)
-        sinks = u[end-sink_count+1:end]
-        return sum(sinks) - fsptol * t / tend
-    end
-    fsp_cb = DE.ContinuousCallback(
-        fsp_error_constraint,
-        affect!,
-        save_positions = (false, false),
-        interp_points = 50
-    )
+    A = FspMatrixSparse{RealT}(statespace, model.propensities, θ = θ)
 
     output = SparseFspOutput{NS,IntT,RealT}(
         t = Vector{RealT}(),
-        p = Vector{SparseMultIdxVector{NS,IntT,RealT}}(),
-        sinks = Vector{Vector{RealT}}()
-    )
+            p = Vector{SparseMultIdxVector{NS,IntT,RealT}}(),
+            sinks = Vector{Vector{RealT}}()
+        )
     while tnow < tend
-        fspprob = DE.ODEProblem(fsprhs!, unow, (tnow, tend), p = θ, sparse=true)        
+        # Set up callback for checking the growth of FSP error over time
+        function fsprhs!(du, u, θ, t)
+            matvec!(du, t, A, u)
+        end
+        function affect!(integrator)
+            DE.terminate!(integrator)
+        end
+        function fsp_error_constraint(u, t, integrator)
+            sinks = u[end-sink_count+1:end]            
+            return sum(sinks) - fsptol * t / tend
+        end
+        fsp_cb = DE.ContinuousCallback(
+            fsp_error_constraint,
+            affect!,
+            save_positions = (false, false),
+            interp_points = 100,
+            abstol = eps()        
+            )
+
+        fspprob = DE.ODEProblem(fsprhs!, unow, (tnow, tend), p = θ)
         integrator = DE.init(fspprob, fspalgorithm.ode_method, atol = odeatol, rtol = odertol, callback = fsp_cb, saveat = saveat)
 
         DE.step!(integrator, tend - tnow, true)
 
         for (t, u) in zip(integrator.sol.t, integrator.sol.u)
             push!(output.t, t)
-            push!(output.p, SparseMultIdxVector(𝔛.states, u[1:end-sink_count]))
+            push!(output.p, SparseMultIdxVector(statespace.states, u[1:end-sink_count]))
             push!(output.sinks, u[end-sink_count+1:end])
         end
 
@@ -108,13 +113,16 @@ function solve(model::CmeModel,
         if tnow < tend
             p = integrator.u[1:end-sink_count]
             sinks = integrator.u[end-sink_count+1:end]
-            adapt!(𝔛, adapter, p, sinks, tnow, tend, fsptol)
-            A = FspMatrixSparse(𝔛, model.propensities, θ = θ)
-            unow = [p; sinks]
+            adapt!(statespace, adapter, p, sinks, tnow, tend, fsptol;integrator=integrator)
+            A = FspMatrixSparse{RealT}(statespace, model.propensities, θ = θ)              
+            if sum(sinks) >= tnow*fsptol/tend 
+                sinks .-= eps()
+            end            
+            unow = [p; sinks]                              
         else
             u = integrator.u
             push!(output.t, tnow)
-            push!(output.p, SparseMultIdxVector(𝔛.states, u[1:end-sink_count]))
+            push!(output.p, SparseMultIdxVector(statespace.states, u[1:end-sink_count]))
             push!(output.sinks, u[end-sink_count+1:end])
         end
     end
