@@ -1,6 +1,6 @@
 using DataStructures: Deque
 
-export AbstractStateSpace, AbstractSparseStateSpace, SparseStateSpace, expand!, deleteat!, get_state_count, get_sink_count, get_stoich_matrix, get_statedict, get_stateconnectivity, get_sinkconnectivity
+export AbstractStateSpace, AbstractSparseStateSpace, SparseStateSpace, expand!, deleteat!, get_state_count, get_sink_count, get_stoich_matrix, get_statedict, get_state_connectivity, get_sink_connectivity
 
 """
 Abstract type for FSP state space. This is the supertype of all concrete FSP state space implementations.
@@ -65,9 +65,9 @@ Return state dictionary.
 """
 get_statedict(statespace::SparseStateSpace) = statespace.state2idx
 
-get_stateconnectivity(statespace::SparseStateSpace) = statespace.state_connectivity
+get_state_connectivity(statespace::SparseStateSpace) = statespace.state_connectivity
 
-get_sinkconnectivity(statespace::SparseStateSpace) = statespace.sink_connectivity
+get_sink_connectivity(statespace::SparseStateSpace) = statespace.sink_connectivity
 
 
 """
@@ -176,8 +176,8 @@ function _addstates!(statespace::SparseStateSpace{NS,NR,IntT}, newstates::Vector
     state2idx = get_statedict(statespace)
     num_sinks = get_sink_count(statespace)
     stoich_matrix = get_stoich_matrix(statespace)
-    state_connectivity = get_stateconnectivity(statespace)
-    sink_connectivity = get_sinkconnectivity(statespace)
+    state_connectivity = get_state_connectivity(statespace)
+    sink_connectivity = get_sink_connectivity(statespace)
     reaction_count = size(stoich_matrix, 2)
 
     unique_newstates = Vector{MVector{NS,IntT}}()
@@ -199,18 +199,21 @@ function _addstates!(statespace::SparseStateSpace{NS,NR,IntT}, newstates::Vector
     statecount = length(states)
 
     @simd for newidx in statecount_old+1:statecount
-        state_connectivity[newidx] = zeros(IntT, reaction_count)
-        sink_connectivity[newidx] = zeros(IntT, reaction_count)
+        @inbounds state_connectivity[newidx] = zeros(IntT, reaction_count)
+        @inbounds sink_connectivity[newidx] = zeros(IntT, reaction_count)
     end
 
+    reachablestate = similar(states[1])
     @simd for newidx in statecount_old+1:statecount 
         # Determine connectivity between states                 
         for ir = 1:reaction_count
-            reachablestate = states[newidx] - stoich_matrix[:, ir]
+            copy!(reachablestate, states[newidx])
+            axpy!(-1, stoich_matrix[:, ir], reachablestate)
+            # reachablestate = states[newidx] - stoich_matrix[:, ir]
             ridx = get(state2idx, reachablestate, 0)
             if ridx ≠ 0
-                state_connectivity[newidx][ir] = ridx
-                sink_connectivity[ridx][ir] = 0
+                @inbounds state_connectivity[newidx][ir] = ridx
+                @inbounds sink_connectivity[ridx][ir] = 0
             end
         end
 
@@ -251,8 +254,8 @@ function deleteat!(statespace::SparseStateSpace, ids::Vector{T}) where {T<:Integ
     # Remove target states from member state list
     states = get_states(statespace)
     state2idx = get_statedict(statespace)
-    state_connectivity = get_stateconnectivity(statespace)
-    sink_connectivity = get_sinkconnectivity(statespace)
+    state_connectivity = get_state_connectivity(statespace)
+    sink_connectivity = get_sink_connectivity(statespace)
 
     for idx in ids
         delete!(state2idx, states[idx])
@@ -267,10 +270,10 @@ function deleteat!(statespace::SparseStateSpace, ids::Vector{T}) where {T<:Integ
     # Reindexing
     reachablestate = similar(states[1])
     @simd for i in 1:length(states)
-        eachstate = states[i]
+        @inbounds eachstate = states[i]
         state2idx[eachstate] = newidxs[state2idx[eachstate]]
         for ir in 1:reaction_count
-            state_connectivity[i][ir] = (oldidx = state_connectivity[i][ir]) ≠ 0 ? newidxs[oldidx] : 0
+            @inbounds state_connectivity[i][ir] = (oldidx = state_connectivity[i][ir]) ≠ 0 ? newidxs[oldidx] : 0
         end
     end
     @simd for i in 1:length(states)
@@ -280,7 +283,7 @@ function deleteat!(statespace::SparseStateSpace, ids::Vector{T}) where {T<:Integ
                 copyto!(reachablestate, eachstate)
                 axpy!(1, stoich_matrix[:, ir], reachablestate)
                 if _is_all_nonnegative(reachablestate) && (get(state2idx, reachablestate, 0) == 0)
-                    sink_connectivity[i][ir] = ir
+                    @inbounds sink_connectivity[i][ir] = ir
                 end
             end
         end

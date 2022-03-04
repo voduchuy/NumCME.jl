@@ -58,7 +58,7 @@ toutputs = 0.0:20.0:120.0
 p0 = SparseMultIdxVector(SparseStateSpace(𝕊, x₀), [x₀ => 1.0])
 fspmethod = AdaptiveSparseFsp(
     ode_method = CVODE_BDF(linear_solver = :GMRES),
-    space_adapter = SelectiveRStepAdapter(10, 10)
+    space_adapter = SelectiveRStepAdapter(10, 10, true)
 )
 
 fspsolutions1 = solve(bursting_model, p0, tspan, fspmethod, odertol = 1.0e-4, odeatol = 1.0e-14, saveat = toutputs)

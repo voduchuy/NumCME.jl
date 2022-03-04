@@ -121,25 +121,25 @@ function _generate_sparsematrix_entries(space::AbstractSparseStateSpace{NS,NR,In
     @simd for idx = 1:state_count
         # Populate the diagonal entries
         dval = (statefactor === nothing) ? 0.0 : statefactor(space.states[idx]..., θ...)
-        rowindices[idx] = idx
-        colindices[idx] = idx
-        vals[idx] = -1.0 * dval
+        @inbounds rowindices[idx] = idx
+        @inbounds colindices[idx] = idx
+        @inbounds vals[idx] = -1.0 * dval
 
         # Populate the row corresponding to a reachable sink state (if any)
         sink_idx = space.sink_connectivity[idx][reactionidx]
         if sink_idx ≠ 0
-            colindices[state_count+idx] = idx
-            rowindices[state_count+idx] = state_count + sink_idx
-            vals[state_count+idx] = dval
+            @inbounds colindices[state_count+idx] = idx
+            @inbounds rowindices[state_count+idx] = state_count + sink_idx
+            @inbounds vals[state_count+idx] = dval
         end
     end
     @simd for idx = 1:state_count
         # If nonzero, this will be the column index of the nonzero entry on the idx-th row
         cidx = space.state_connectivity[idx][reactionidx]
         if cidx ≠ 0
-            rowindices[cidx+state_count] = idx
-            colindices[cidx+state_count] = cidx
-            vals[cidx+state_count] = -1.0 * vals[cidx]            
+            @inbounds rowindices[cidx+state_count] = idx
+            @inbounds colindices[cidx+state_count] = cidx
+            @inbounds vals[cidx+state_count] = -1.0 * vals[cidx]            
         end
     end
     return rowindices[colindices.≠0], colindices[colindices.≠0], vals[colindices.≠0]
@@ -147,14 +147,13 @@ end
 
 function _update_sparsematrix!(matrix::SparseMatrixCSC, states::Vector, propensity::JointTimeVaryingPropensity, t::AbstractFloat, θ::Vector = [])
     m = matrix.m
-    n = length(states)
-    colptr = matrix.colptr
-    rowval = matrix.rowval
-    nzval = matrix.nzval
+    n = length(states)    
+    rowvals = SArrays.getrowval(matrix)
+    nzvals = SArrays.getnzval(matrix)
     @simd for icol in 1:n
         val = propensity.f(t, states[icol]..., θ...)
-        for i in colptr[icol]:(colptr[icol+1]-1)
-            nzval[i] = (rowval[i] == icol) ? -1.0 * val : val
+        for i in nzrange(matrix, icol)
+            @inbounds nzvals[i] = (rowvals[i] == icol) ? -1.0 * val : val
         end
     end
     nothing
