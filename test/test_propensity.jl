@@ -1,4 +1,4 @@
-using EtFsp 
+using Julifsp
 using Test 
 
 p1 = propensity((G, RNA) -> RNA)

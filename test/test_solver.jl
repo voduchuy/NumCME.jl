@@ -1,5 +1,5 @@
 using Test
-using EtFsp
+using Julifsp
 using LinearAlgebra
 using Sundials: CVODE_BDF
 
