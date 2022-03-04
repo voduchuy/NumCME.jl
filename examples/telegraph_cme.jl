@@ -1,4 +1,4 @@
-using EtFsp
+using Julifsp
 import DifferentialEquations as DE
 using Sundials: CVODE_BDF
 using StaticArrays

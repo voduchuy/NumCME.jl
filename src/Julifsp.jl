@@ -1,4 +1,4 @@
-module EtFsp
+module Julifsp
 using Reexport, ReusePatterns, SparseArrays, StaticArrays 
 include("cmemodel/cmemodel.jl")
 include("statespace/statespace.jl")
