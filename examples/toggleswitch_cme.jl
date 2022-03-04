@@ -1,4 +1,4 @@
-using EtFsp
+using Julifsp
 using BenchmarkTools
 import DifferentialEquations as DE
 using Sundials: CVODE_BDF
