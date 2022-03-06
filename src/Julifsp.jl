@@ -1,5 +1,7 @@
 module Julifsp
-using Reexport, ReusePatterns, SparseArrays, StaticArrays 
+using Reexport, ReusePatterns, SparseArrays, StaticArrays, SparsityDetection
+import ForwardDiff
+
 include("cmemodel/cmemodel.jl")
 include("statespace/statespace.jl")
 include("fspvector/fspvector.jl")
