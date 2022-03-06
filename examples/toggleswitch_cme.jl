@@ -5,20 +5,36 @@ using Sundials: CVODE_BDF
 
 ##  Toggle-switch model
 𝕊 = [[1, 0] [-1, 0] [0, 1] [0, -1]]
-α₁ = propensity((S₁, S₂, b₁, b₂, k₁, k₂, a₂₁, a₁₂, n₂₁, n₁₂, γ₁, γ₂, UV, Δtᵤᵥ) -> b₁ + k₁/(1.0 + a₂₁*S₂^n₂₁))
-α₂ = propensity((S₁, S₂, b₁, b₂, k₁, k₂, a₂₁, a₁₂, n₂₁, n₁₂, γ₁, γ₂, UV, Δtᵤᵥ) -> γ₁ * S₁)
-α₃ = propensity((S₁, S₂, b₁, b₂, k₁, k₂, a₂₁, a₁₂, n₂₁, n₁₂, γ₁, γ₂, UV, Δtᵤᵥ) -> b₂ + k₂/(1.0 + a₁₂*S₁^n₁₂))
 
-# Mathematically equivalent definitions of the fourth propensity function for S2 degradation, but computationally they are different: α₄ requires the time and state variables to be evaluated jointly whereas β₄ is factored into a time-only and a state-only functions
-α₄ = propensity_timevarying((t, S₁, S₂, b₁, b₂, k₁, k₂, a₂₁, a₁₂, n₂₁, n₁₂, γ₁, γ₂, UV, Δtᵤᵥ) -> (γ₂ + (t ≤ Δtᵤᵥ)*0.002*UV^2/(1260+UV^3))*S₂)
-β₄ = propensity_timevarying((t, b₁, b₂, k₁, k₂, a₂₁, a₁₂, n₂₁, n₁₂, γ₁, γ₂, UV, Δtᵤᵥ) -> γ₂ + (t ≤ Δtᵤᵥ)*0.002*UV^2/(1260+UV^3), (S₁, S₂, b₁, b₂, k₁, k₂, a₂₁, a₁₂, n₂₁, n₁₂, γ₁, γ₂, UV, Δtᵤᵥ) -> S₂)
+α₁ = propensity() do x, p 
+    S₁, S₂ = x
+    b₁, b₂, k₁, k₂, a₂₁, a₁₂, n₂₁, n₁₂, γ₁, γ₂, UV, Δtᵤᵥ = p
+    b₁ + k₁/(1.0 + a₂₁*S₂^n₂₁)
+end
+α₂ = propensity() do x, p 
+    S₁, S₂ = x
+    b₁, b₂, k₁, k₂, a₂₁, a₁₂, n₂₁, n₁₂, γ₁, γ₂, UV, Δtᵤᵥ = p
+    γ₁ * S₁
+end
+α₃ = propensity() do x, p 
+    S₁, S₂ = x
+    b₁, b₂, k₁, k₂, a₂₁, a₁₂, n₂₁, n₁₂, γ₁, γ₂, UV, Δtᵤᵥ = p
+    b₂ + k₂/(1.0 + a₁₂*S₁^n₁₂)
+end
+α₄ = propensity_timevarying() do t, x, p 
+    S₁, S₂ = x
+    b₁, b₂, k₁, k₂, a₂₁, a₁₂, n₂₁, n₁₂, γ₁, γ₂, UV, Δtᵤᵥ = p
+    (γ₂ + (t ≤ Δtᵤᵥ)*0.002*UV^2/(1260+UV^3))*S₂
+end
 
-propensities_joint = [α₁,α₂,α₃,α₄]
-propensities_separable = [α₁,α₂,α₃,β₄]
-model_joint = CmeModel(𝕊, propensities_joint)
-model_separable = CmeModel(𝕊, propensities_separable)
-
-x₀ = [0, 0]
+# This propensity formulation is mathematically equivalent to α₄ but leads to more computationally efficient CME solves because β₄ is factored into a time-only and a state-only functions
+function degradation_rate(t, p)
+    b₁, b₂, k₁, k₂, a₂₁, a₁₂, n₂₁, n₁₂, γ₁, γ₂, UV, Δtᵤᵥ = p
+    γ₂ + (t ≤ Δtᵤᵥ)*0.002*UV^2/(1260+UV^3)
+end
+β₄ = propensity_timevarying(degradation_rate) do x, p 
+    x[2] 
+end
 
 b₁ = 2.2E-3 
 b₂ = 6.8E-5 
@@ -35,6 +51,12 @@ UV = 10.0
 
 θ = [b₁, b₂, k₁, k₂, a₂₁, a₁₂, n₂₁, n₁₂, γ₁, γ₂, UV, Δtᵤᵥ]
 
+propensities_joint = [α₁,α₂,α₃,α₄]
+propensities_separable = [α₁,α₂,α₃,β₄]
+model_joint = CmeModel(𝕊, propensities_joint, θ)
+model_separable = CmeModel(𝕊, propensities_separable, θ)
+
+x₀ = [0, 0]
 𝔛₀ = SparseStateSpace(𝕊, x₀)
 p0 = SparseMultIdxVector(𝔛₀, [x₀=>1.0])
 
@@ -51,8 +73,12 @@ adaptiverstepfsp = AdaptiveSparseFsp(
     space_adapter = SelectiveRStepAdapter(20, 5, true)
 )
 
+println("Solving with full R-step expansion and separable propensity format")
 @btime fspsol1 = solve(model_separable, p0, tspan, fixedrstepfsp, θ, saveat=saveat, odertol=1.0E-4, odeatol=1.0E-14);
+println("Solving with selective R-step expansion and separable propensity format")
 @btime fspsol2 = solve(model_separable, p0, tspan, adaptiverstepfsp, θ, saveat=saveat, odertol=1.0E-4, odeatol=1.0E-14);
+println("Solving with full R-step expansion and non-separable propensity format")
 @btime fspsol3 = solve(model_joint, p0, tspan, fixedrstepfsp, θ, saveat=saveat, odertol=1.0E-4, odeatol=1.0E-14);
+println("Solving with selective R-step expansion and non-separable propensity format")
 @btime fspsol4 = solve(model_joint, p0, tspan, adaptiverstepfsp, θ, saveat=saveat, odertol=1.0E-4, odeatol=1.0E-14);
 

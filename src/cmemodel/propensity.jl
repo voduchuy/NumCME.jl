@@ -1,5 +1,5 @@
 export Propensity, TimeInvariantPropensity, TimeVaryingPropensity, propensity, propensity_timevarying, istimeseparable, istimevarying
-export StandardTimeIndependentPropensity, SeparableTimeVaryingPropensity, JointTimeVaryingPropensity
+export StandardTimeInvariantPropensity, SeparableTimeVaryingPropensity, JointTimeVaryingPropensity
 export PropensityGradient, TimeVaryingPropensityGradient, JointTimeVaryingPropensityGradient, SeparableTimeVaryingPropensityGradient, propensitygrad, propensitygrad_timevarying
 
 abstract type Propensity end
@@ -9,61 +9,46 @@ abstract type TimeVaryingPropensity <: Propensity end
 istimevarying(α::Propensity) = false
 istimeseparable(α::Propensity) = false
 
-struct StandardTimeIndependentPropensity <: TimeInvariantPropensity
-    f::Function
+struct StandardTimeInvariantPropensity <: TimeInvariantPropensity
+    f::Any
 end
 
 struct SeparableTimeVaryingPropensity <: TimeVaryingPropensity
-    tfactor::Union{Function,Nothing}
-    statefactor::Function
+    tfactor::Union{Any,Nothing}
+    statefactor::Any
 end
 
 struct JointTimeVaryingPropensity <: TimeVaryingPropensity
-    f::Function
+    f::Any
 end
 
 istimevarying(α::TimeVaryingPropensity) = true
 istimeseparable(α::SeparableTimeVaryingPropensity) = true
 
-function propensity(f::Function)
-    return StandardTimeIndependentPropensity(f)
+function propensity(f::Any)
+    return StandardTimeInvariantPropensity(f)
 end
 
-function propensity_timevarying(f::Function)
+function propensity_timevarying(f::Any)
     return JointTimeVaryingPropensity(f)
 end
 
-function propensity_timevarying(tfactor::Function, xfactor::Function)
+function propensity_timevarying(xfactor::Any, tfactor::Any)
     return SeparableTimeVaryingPropensity(tfactor, xfactor)
 end
 
-abstract type PropensityGradient end
-abstract type TimeInvariantPropensityGradient <: PropensityGradient end
-abstract type TimeVaryingPropensityGradient <: PropensityGradient end
-
-struct StandardTimeIndependentPropensityGradient <: TimeInvariantPropensityGradient
-    gradf::Function
+# Call methods to make Propensity objects callable
+function (a::StandardTimeInvariantPropensity)(x::AbstractVector, p=[])
+    a.f(x,p)
+end
+function (a::StandardTimeInvariantPropensity)(t::AbstractFloat, x::AbstractVector, p=[])
+    a.f(x,p)
+end
+function (a::JointTimeVaryingPropensity)(t::AbstractFloat, x::AbstractVector, p=[])
+    a.f(t,x,p)
+end
+function (a::SeparableTimeVaryingPropensity)(t, x::AbstractVector, p=[])
+    a.tfactor(t,p)*a.statefactor(x,p)
 end
 
-struct SeparableTimeVaryingPropensityGradient <: TimeVaryingPropensityGradient
-    tfactor::Function
-    statefactor::Function
-    gradtfactor::Union{Function,Nothing}
-    gradstatefactor::Function
-end
 
-struct JointTimeVaryingPropensityGradient <: TimeVaryingPropensityGradient
-    gradf::Function
-end
-
-function propensitygrad(∇f::Function)
-    return StandardTimeIndependentPropensityGradient(∇f)
-end
-
-function propensitygrad_timevarying(∇f::Function)
-    return JointTimeVaryingPropensityGradient(∇f)
-end
-
-function propensitygrad_timevarying(tfactor::Function, statefactor::Function, ∇tfactor::Function, ∇xfactor::Function)
-    return SeparableTimeVaryingPropensityGradient(tfactor, statefactor, ∇tfactor, ∇xfactor)
-end

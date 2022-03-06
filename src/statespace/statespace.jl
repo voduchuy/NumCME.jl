@@ -6,29 +6,29 @@ export AbstractStateSpace, AbstractSparseStateSpace, SparseStateSpace, expand!, 
 Abstract type for FSP state space. This is the supertype of all concrete FSP state space implementations.
 """
 abstract type AbstractStateSpace end
-abstract type AbstractSparseStateSpace{NS,NR,IntT<:Integer} <: AbstractStateSpace end
+abstract type AbstractSparseStateSpace{NS,NR,IntT<:Integer,SizeT<:Integer} <: AbstractStateSpace end
 
 """
 Basic Sparse FSP State space.
 """
-Base.@kwdef mutable struct SparseStateSpace{NS,NR,IntT<:Integer} <: AbstractSparseStateSpace{NS,NR,IntT}
+Base.@kwdef mutable struct SparseStateSpace{NS,NR,IntT<:Integer,SizeT<:Integer} <: AbstractSparseStateSpace{NS,NR,IntT,SizeT}
     "Stoichiometry matrix S = [s₁ ... sₘ] of size N x M where N is the number of species, M the number of the reactions."
     stoich_matrix::Matrix{IntT}
 
     "Number of sinks"
-    sink_count::IntT
+    sink_count::SizeT
 
     "Array of CME states included in the subspace"
     states::Vector{MVector{NS,IntT}}
 
     "Dictionary of states, containing pairs `(x=>i)` for (i,x) in enumerate(states). The implementation must ensure that each state in `states` is a key in `state2idx` and conversely every key in `state2idx` exists in `states`."
-    state2idx::Dict{MVector{NS,IntT},IntT}
+    state2idx::Dict{MVector{NS,IntT},SizeT}
 
     "List of state connectivity information. `state_connectivity[i][k] = j` if xᵢ = xⱼ + sₖ, that is, `states[i] = states[j] + stoich_mat[:, k]`. If there is no existing state that can reach xᵢ via reaction k, the implementation must ensure that `state_connectivity[i][k] = 0`."
-    state_connectivity::Vector{MVector{NR,IntT}}
+    state_connectivity::Vector{MVector{NR,SizeT}}
 
     "Matrix to store reaction events by which the included states transit to outside of the projected state space"
-    sink_connectivity::Vector{MVector{NR,IntT}}
+    sink_connectivity::Vector{MVector{NR,SizeT}}
 end
 """
 `get_stoich_matrix(space::SparseStateSpace)`
@@ -75,7 +75,7 @@ get_sink_connectivity(statespace::SparseStateSpace) = statespace.sink_connectivi
 
 Construct a basic FSP state space with stoichiometry matrix `stoich_mat` and initial list of states `initstates`.
 """
-function SparseStateSpace(stoich_matrix::Matrix{IntT}, initstates::Vector) where {IntT<:Integer}
+function SparseStateSpace(stoich_matrix::Matrix{IntT}, initstates::Vector; index_type::Type{SizeT} = UInt32) where {IntT<:Integer,SizeT<:Integer}
     species_count = size(stoich_matrix, 1)
     reaction_count = size(stoich_matrix, 2)
     sink_count = size(stoich_matrix, 2)
@@ -85,7 +85,7 @@ function SparseStateSpace(stoich_matrix::Matrix{IntT}, initstates::Vector) where
     state_connectivity = Vector{MVector{reaction_count,IntT}}()
     sink_connectivity = Vector{MVector{reaction_count,IntT}}()
 
-    fspstatespace = SparseStateSpace{species_count,reaction_count,IntT}(
+    fspstatespace = SparseStateSpace{species_count,reaction_count,IntT,index_type}(
         stoich_matrix = stoich_matrix,
         states = states,
         state2idx = state2idx,
@@ -103,7 +103,7 @@ end
 
 Construct a basic FSP state space with stoichiometry matrix `stoich_mat` and a single state `init_state`.
 """
-function SparseStateSpace(stoich_matrix::Matrix{IntT}, init_state::Vector{IntT}) where {IntT<:Integer}
+function SparseStateSpace(stoich_matrix::Matrix{IntT}, init_state::Vector{IntT}; index_type::Type{SizeT} = UInt32) where {IntT<:Integer,SizeT<:Integer}
     return SparseStateSpace(stoich_matrix, [init_state])
 end
 
@@ -112,19 +112,19 @@ end
 """
 Expand the FSP state space to include all states that are reachable from the existing states in `r` or fewer reaction events, where `r == num_reachable_steps`.
 """
-function expand!(statespace::SparseStateSpace{NS,NR,IntT}, expansionlevel::Integer; onlyreactions = []) where {NS,NR,IntT<:Integer}
+function expand!(statespace::SparseStateSpace{NS,NR,IntT,SizeT}, expansionlevel::Integer; onlyreactions = []) where {NS,NR,IntT<:Integer,SizeT<:Integer}
     if expansionlevel <= 0
         return
     end
     # Reference to mutable fields within stateset
-    stoich_matrix = statespace.stoich_matrix
-    states = statespace.states # Array of states 
-    sink_connectivity = statespace.sink_connectivity
+    stoich_matrix = get_stoich_matrix(statespace)
+    states = get_states(statespace)
+    sink_connectivity = get_sink_connectivity(statespace)
 
     reaction_count = size(stoich_matrix, 2)
     expandreactions = isempty(onlyreactions) ? (1:reaction_count) : onlyreactions
 
-    explorables = Deque{IntT}()
+    explorables = Deque{SizeT}()
     for idx in 1:length(states)
         for ir in expandreactions
             if sink_connectivity[idx][ir] != 0
@@ -171,7 +171,7 @@ end
 Helper function to add a state vector `newstate` to the current state space `statespace`.
 If `newstate` is already included in `statespace`, this function will return without modifying any of the input arguments.
 """
-function _addstates!(statespace::SparseStateSpace{NS,NR,IntT}, newstates::Vector{VT}) where {NS,NR,IntT<:Integer,VT<:Union{Vector{IntT},MVector{NS,IntT}}}
+function _addstates!(statespace::SparseStateSpace{NS,NR,IntT,SizeT}, newstates::Vector{VT}) where {NS,NR,IntT<:Integer,VT<:Union{Vector{IntT},MVector{NS,IntT}},SizeT<:Integer}
     states = get_states(statespace)
     state2idx = get_statedict(statespace)
     num_sinks = get_sink_count(statespace)
@@ -204,7 +204,7 @@ function _addstates!(statespace::SparseStateSpace{NS,NR,IntT}, newstates::Vector
     end
 
     reachablestate = similar(states[1])
-    @simd for newidx in statecount_old+1:statecount 
+    @simd for newidx in statecount_old+1:statecount
         # Determine connectivity between states                 
         for ir = 1:reaction_count
             copy!(reachablestate, states[newidx])
