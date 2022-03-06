@@ -11,21 +11,42 @@ k₁₀ = 0.1
 λ = 5.0
 γ = 1.0
 
-propensities = [
-    propensity((G₀::Int, G₁::Int, RNA::Int) -> k₀₁ * G₀)
-    propensity_timevarying(t -> max(0.0, 1.0 - sin(π * t / 2)), (G₀::Int, G₁::Int, RNA::Int) -> k₁₀ * G₁)
-    propensity((G₀::Int, G₁::Int, RNA::Int) -> λ * G₁)
-    propensity((G₀::Int, G₁::Int, RNA::Int) -> γ * RNA)
-]
-bursting_model = CmeModel(𝕊, propensities)
+θ = [k₀₁, k₁₀, λ, γ]
 
-propensities_parmaterized = [
-    propensity((G₀::Int, G₁::Int, RNA::Int, k₀₁, k₁₀, λ, γ) -> k₀₁ * G₀)
-    propensity_timevarying((t, k₀₁, k₁₀, λ, γ) -> max(0.0, 1.0 - sin(π * t / 2)), (G₀::Int, G₁::Int, RNA::Int,  k₀₁, k₁₀, λ, γ) -> k₁₀ * G₁)
-    propensity((G₀::Int, G₁::Int, RNA::Int, k₀₁, k₁₀, λ, γ) -> λ * G₁)
-    propensity((G₀::Int, G₁::Int, RNA::Int, k₀₁, k₁₀, λ, γ) -> γ * RNA)
-]
-bursting_model_parameterized = CmeModel(𝕊, propensities_parmaterized)
+# Propensity formulations that have no dependencies on parameters
+a1 = propensity() do x, p
+    k₀₁ * x[1]
+end
+a2 = propensity_timevarying((t, p) -> max(0.0, 1.0 - sin(π * t / 2))) do x, p
+    k₁₀ * x[2]
+end
+a2j = propensity_timevarying() do t, x, p
+    max(0.0, 1.0 - sin(π * t / 2)) * k₁₀ * x[2]
+end
+a3 = propensity() do x, p
+    λ * x[2]
+end
+a4 = propensity() do x, p
+    γ * x[3]
+end
+
+# Propensity formulations that have dependencies on parameters
+a1_p = propensity() do x, p
+    p[1] * x[1]
+end
+a2_p = propensity_timevarying((t, p) -> max(0.0, 1.0 - sin(π * t / 2))) do x, p
+    p[2] * x[2]
+end
+a3_p = propensity() do x, p
+    p[3] * x[2]
+end
+a4_p = propensity() do x, p
+    p[4] * x[3]
+end
+
+
+bursting_model = CmeModel(𝕊, [a1, a2, a3, a4], [])
+bursting_model_parameterized = CmeModel(𝕊, [a1_p, a2_p, a3_p, a4_p], θ)
 
 # Fixed FSP solver 
 # Solve to get dense outputs
@@ -66,7 +87,7 @@ fspsolutions1 = solve(bursting_model, p0, tspan, fspmethod, odertol = 1.0e-4, od
     [(sum(p) + sum(sinks) ≈ 1.0) for (p, sinks) in zip(fspsolutions1.p, fspsolutions1.sinks)
 ])
 
-fspsolutions2 = solve(bursting_model_parameterized, p0, tspan, fspmethod, [k₀₁, k₁₀, λ, γ], odertol = 1.0e-4, odeatol = 1.0e-14, saveat = toutputs)
+fspsolutions2 = solve(bursting_model_parameterized, p0, tspan, fspmethod, odertol = 1.0e-4, odeatol = 1.0e-14, saveat = toutputs)
 @test prod(
     [(sum(p) + sum(sinks) ≈ 1.0) for (p, sinks) in zip(fspsolutions2.p, fspsolutions2.sinks)
 ])

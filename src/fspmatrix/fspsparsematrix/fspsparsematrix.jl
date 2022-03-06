@@ -120,7 +120,7 @@ function _generate_sparsematrix_entries(space::AbstractSparseStateSpace{NS,NR,In
     # Not optimal, should evaluate propensity function only once per CME state
     @simd for idx = 1:state_count
         # Populate the diagonal entries
-        dval = (statefactor === nothing) ? 0.0 : statefactor(space.states[idx]..., θ...)
+        dval = (statefactor === nothing) ? 0.0 : statefactor(space.states[idx], θ)
         @inbounds rowindices[idx] = idx
         @inbounds colindices[idx] = idx
         @inbounds vals[idx] = -1.0 * dval
@@ -151,7 +151,7 @@ function _update_sparsematrix!(matrix::SparseMatrixCSC, states::Vector, propensi
     rowvals = SArrays.getrowval(matrix)
     nzvals = SArrays.getnzval(matrix)
     @simd for icol in 1:n
-        val = propensity.f(t, states[icol]..., θ...)
+        val = propensity.f(t, states[icol], θ)
         for i in nzrange(matrix, icol)
             @inbounds nzvals[i] = (rowvals[i] == icol) ? -1.0 * val : val
         end
@@ -195,7 +195,7 @@ function matvec!(out, t, A::FspMatrixSparse, v)
     θ = A.parameters
     for (i, r) in enumerate(A.separabletv_propensity_ids)
         # out .+= A.propensities[r].tfactor(t, θ...)*A.separabletv_factormatrices[i]*v
-        SArrays.mul!(out, A.separabletv_factormatrices[i], v, A.propensities[r].tfactor(t, θ...), 1)        
+        SArrays.mul!(out, A.separabletv_factormatrices[i], v, A.propensities[r].tfactor(t, θ), 1)        
     end    
     needupdate = false
     if t ≠ A.t_cache

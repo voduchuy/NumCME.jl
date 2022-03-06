@@ -61,6 +61,3 @@ expand!(toggle_statespace, 3)
 toggle_expected_states = sort([[0, 0], [1, 0], [2, 0], [3, 0], [0, 1], [1,1], [2, 1], [0, 2], [1, 2], [0, 3]])
 toggle_generated_states = sort(get_states(toggle_statespace))
 @test toggle_expected_states == toggle_generated_states 
-
-# Test deletion 
-

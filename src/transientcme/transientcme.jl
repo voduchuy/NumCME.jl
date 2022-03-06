@@ -17,20 +17,20 @@ end
 function solve(model::CmeModel,
     initial_distribution::SparseMultIdxVector{NS,IntT,RealT},
     tspan::Union{Vector,Tuple},
-    fspalgorithm::FixedSparseFsp,
-    θ = []; saveat = [], fsptol::AbstractFloat = 1.0E-6, odeatol::AbstractFloat = 1.0E-10, odertol::AbstractFloat = 1.0E-4) where {NS,IntT<:Integer,RealT<:AbstractFloat}
+    fspalgorithm::FixedSparseFsp; 
+    saveat = [], fsptol::AbstractFloat = 1.0E-6, odeatol::AbstractFloat = 1.0E-10, odertol::AbstractFloat = 1.0E-4) where {NS,IntT<:Integer,RealT<:AbstractFloat}
 
     𝔛 = SparseStateSpace(model.stoich_matrix, initial_distribution.states)
     sink_count = get_sink_count(𝔛)
     p0 = initial_distribution.values
 
-    A = FspMatrixSparse(𝔛, model.propensities, θ = θ)
+    A = FspMatrixSparse(𝔛, model.propensities, θ = model.parameters)
     u0 = [p0; zeros(sink_count)]
     function odefun!(du, u, θ, t)
         matvec!(du, t, A, u)
         nothing
     end
-    fspprob = ODEProblem(odefun!, u0, tspan, p = θ)
+    fspprob = ODEProblem(odefun!, u0, tspan, p = model.parameters)
     solutions = DE.solve(fspprob, fspalgorithm.ode_method, atol = odeatol, rtol = odertol, saveat = saveat)
 
     output = SparseFspOutput{NS,IntT,RealT}(
@@ -55,8 +55,7 @@ end
 function solve(model::CmeModel,
     initial_distribution::SparseMultIdxVector{NS,IntT,RealT},
     tspan::Tuple{AbstractFloat,AbstractFloat},
-    fspalgorithm::AdaptiveSparseFsp,
-    θ = []; saveat = [], fsptol::AbstractFloat = 1.0E-6,
+    fspalgorithm::AdaptiveSparseFsp; saveat = [], fsptol::AbstractFloat = 1.0E-6,
     odeatol::AbstractFloat = 1.0E-10,
     odertol::AbstractFloat = 1.0E-4) where {NS,IntT<:Integer,RealT<:AbstractFloat}
 
@@ -71,7 +70,7 @@ function solve(model::CmeModel,
 
     tnow = tstart
     unow = [p0; zeros(sink_count)]
-    A = FspMatrixSparse{RealT}(statespace, model.propensities, θ = θ)
+    A = FspMatrixSparse{RealT}(statespace, model.propensities, θ = model.parameters)
 
     output = SparseFspOutput{NS,IntT,RealT}(
         t = Vector{RealT}(),
@@ -98,7 +97,7 @@ function solve(model::CmeModel,
             abstol = eps()        
             )
 
-        fspprob = DE.ODEProblem(fsprhs!, unow, (tnow, tend), p = θ)
+        fspprob = DE.ODEProblem(fsprhs!, unow, (tnow, tend), p = model.parameters)
         integrator = DE.init(fspprob, fspalgorithm.ode_method, atol = odeatol, rtol = odertol, callback = fsp_cb, saveat = saveat)
 
         DE.step!(integrator, tend - tnow, true)
@@ -114,7 +113,7 @@ function solve(model::CmeModel,
             p = integrator.u[1:end-sink_count]
             sinks = integrator.u[end-sink_count+1:end]
             adapt!(statespace, adapter, p, sinks, tnow, tend, fsptol;integrator=integrator)
-            A = FspMatrixSparse{RealT}(statespace, model.propensities, θ = θ)              
+            A = FspMatrixSparse{RealT}(statespace, model.propensities, θ = model.parameters)              
             if sum(sinks) >= tnow*fsptol/tend 
                 sinks .-= eps()
             end            
