@@ -21,7 +21,7 @@ end
     b₁, b₂, k₁, k₂, a₂₁, a₁₂, n₂₁, n₁₂, γ₁, γ₂, UV, Δtᵤᵥ = p
     b₂ + k₂/(1.0 + a₁₂*S₁^n₁₂)
 end
-α₄ = propensity_timevarying() do t, x, p 
+α₄ = propensity() do t, x, p 
     S₁, S₂ = x
     b₁, b₂, k₁, k₂, a₂₁, a₁₂, n₂₁, n₁₂, γ₁, γ₂, UV, Δtᵤᵥ = p
     (γ₂ + (t ≤ Δtᵤᵥ)*0.002*UV^2/(1260+UV^3))*S₂
@@ -32,7 +32,7 @@ function degradation_rate(t, p)
     b₁, b₂, k₁, k₂, a₂₁, a₁₂, n₂₁, n₁₂, γ₁, γ₂, UV, Δtᵤᵥ = p
     γ₂ + (t ≤ Δtᵤᵥ)*0.002*UV^2/(1260+UV^3)
 end
-β₄ = propensity_timevarying(degradation_rate) do x, p 
+β₄ = propensity(degradation_rate) do x, p 
     x[2] 
 end
 
@@ -74,11 +74,11 @@ adaptiverstepfsp = AdaptiveSparseFsp(
 )
 
 println("Solving with full R-step expansion and separable propensity format")
-@btime fspsol1 = solve(model_separable, p0, tspan, fixedrstepfsp, θ, saveat=saveat, odertol=1.0E-4, odeatol=1.0E-14);
+@btime fspsol1 = solve(model_separable, p0, tspan, fixedrstepfsp, saveat=saveat, odertol=1.0E-4, odeatol=1.0E-14);
 println("Solving with selective R-step expansion and separable propensity format")
-@btime fspsol2 = solve(model_separable, p0, tspan, adaptiverstepfsp, θ, saveat=saveat, odertol=1.0E-4, odeatol=1.0E-14);
+@btime fspsol2 = solve(model_separable, p0, tspan, adaptiverstepfsp, saveat=saveat, odertol=1.0E-4, odeatol=1.0E-14);
 println("Solving with full R-step expansion and non-separable propensity format")
-@btime fspsol3 = solve(model_joint, p0, tspan, fixedrstepfsp, θ, saveat=saveat, odertol=1.0E-4, odeatol=1.0E-14);
+@btime fspsol3 = solve(model_joint, p0, tspan, fixedrstepfsp, saveat=saveat, odertol=1.0E-4, odeatol=1.0E-14);
 println("Solving with selective R-step expansion and non-separable propensity format")
-@btime fspsol4 = solve(model_joint, p0, tspan, adaptiverstepfsp, θ, saveat=saveat, odertol=1.0E-4, odeatol=1.0E-14);
+@btime fspsol4 = solve(model_joint, p0, tspan, adaptiverstepfsp, saveat=saveat, odertol=1.0E-4, odeatol=1.0E-14);
 

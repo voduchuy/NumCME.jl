@@ -17,10 +17,10 @@ k₁₀ = 0.1
 a1 = propensity() do x, p
     k₀₁ * x[1]
 end
-a2 = propensity_timevarying((t, p) -> max(0.0, 1.0 - sin(π * t / 2))) do x, p
+a2 = propensity((t, p) -> max(0.0, 1.0 - sin(π * t / 2))) do x, p
     k₁₀ * x[2]
 end
-a2j = propensity_timevarying() do t, x, p
+a2j = propensity() do t, x, p
     max(0.0, 1.0 - sin(π * t / 2)) * k₁₀ * x[2]
 end
 a3 = propensity() do x, p
@@ -34,7 +34,7 @@ end
 a1_p = propensity() do x, p
     p[1] * x[1]
 end
-a2_p = propensity_timevarying((t, p) -> max(0.0, 1.0 - sin(π * t / 2))) do x, p
+a2_p = propensity((t, p) -> max(0.0, 1.0 - sin(π * t / 2))) do x, p
     p[2] * x[2]
 end
 a3_p = propensity() do x, p

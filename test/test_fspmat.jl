@@ -19,10 +19,10 @@ end
 α₂ = propensity() do x, p 
     p[2]*x[2]
 end
-α₂tv = propensity_timevarying((t,p) -> max(0.0, 1.0 - sin(π * t / 2))) do x, p 
+α₂tv = propensity((t,p) -> max(0.0, 1.0 - sin(π * t / 2))) do x, p 
     p[2]*x[2]
 end
-α₂tvj = propensity_timevarying() do t, x, p 
+α₂tvj = propensity() do t, x, p 
     max(0.0, 1.0 - sin(π * t / 2))*p[2]*x[2]
 end
 α₃ = propensity() do x, p 
