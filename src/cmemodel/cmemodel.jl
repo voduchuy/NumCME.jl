@@ -1,4 +1,4 @@
-export CmeModel, CmeModelWithSensitivity, get_stoich_matrix, get_propensities, gradient_sparsity_patterns, propensity_gradients, get_species_count, get_reaction_count, get_parameter_count
+export CmeModel, CmeModelWithSensitivity, get_stoich_matrix, get_propensities, gradient_sparsity_patterns, propensity_gradients, get_species_count, get_reaction_count, get_parameter_count, get_parameters
 export get_propensity_gradients, get_gradient_sparsity_patterns
 
 include("propensity.jl")
@@ -10,6 +10,7 @@ struct CmeModel{IntT<:Integer,PT<:Propensity}
     parameters::AbstractVector
 end
 # Accessors 
+get_parameters(model::CmeModel) = model.parameters
 get_species_count(model::CmeModel) = size(model.stoich_matrix, 1)
 get_reaciton_count(model::CmeModel) = size(model.stoich_matrix, 2)
 get_parameter_count(model::CmeModel) = length(model.parameters)
@@ -34,7 +35,7 @@ function CmeModelWithSensitivity(model::CmeModel)
     gradient_sparsity_patterns = propensitygrad_sparsity_pattern(species_count, parameter_count, get_propensities(model))
     propensity_gradients = Vector{PropensityGradient}()
     for propensity in get_propensities(model)
-        push!(propensity_gradients, propensity_forwarddiff(propensity, species_count, parameter_count))
+        push!(propensity_gradients, propensity_forwarddiff(propensity, parameter_count))
     end
     return CmeModelWithSensitivity(
         model,

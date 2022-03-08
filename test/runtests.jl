@@ -1,8 +1,13 @@
 using EtFsp
 using Test
 
+
 @testset "CME model" begin
     include("test_propensity.jl")    
+end
+
+@testset "Sensitivity model" begin 
+    include("test_autodiff.jl")
 end
 
 @testset "State Space" begin

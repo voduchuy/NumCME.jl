@@ -1,55 +1,37 @@
-export StandardTimeInvariantPropensityForwardDiff, JointTimeVaryingPropensityForwardDiff, SeparableTimeVaryingPropensityForwardDiff, tfactorgrad, statefactorgrad
+export propensity_forwarddiff
 
-struct StandardTimeInvariantPropensityForwardDiff{TIP <: TimeInvariantPropensity} <: TimeInvariantPropensityGradient
-    propensity::TIP 
-    cfg::ForwardDiff.GradientConfig    
-    species_count::Integer 
-    parameter_count::Integer
-end
-function StandardTimeInvariantPropensityForwardDiff(f::TIP, species_count, parameter_count) where {TIP <: TimeInvariantPropensity}
-    return StandardTimeInvariantPropensityForwardDiff(f, ForwardDiff.GradientConfig(nothing, zeros(species_count+parameter_count)), species_count, parameter_count)
-end
-function (g::StandardTimeInvariantPropensityForwardDiff)(x::AbstractVector, p::AbstractVector)
-    return ForwardDiff.gradient(z->g.propensity(z[1:g.species_count],z[g.species_count+1:end]), [x;p], g.cfg)[end-g.parameter_count+1:end]
+function propensity_forwarddiff(f::StandardTimeInvariantPropensity, parameter_count)
+    pardiffs = []
+    for ip in 1:parameter_count
+        push!(pardiffs, 
+            (x, p) -> ForwardDiff.derivative(z -> f(x,[p[1:ip-1];z;p[ip+1:end]]), p[ip])
+        )
+    end
+    return StandardTimeInvariantPropensityGradient(pardiffs)
 end
 
-struct JointTimeVaryingPropensityForwardDiff{TVP <: JointTimeVaryingPropensity} <: TimeVaryingPropensityGradient
-    species_count::Integer 
-    parameter_count::Integer
-    propensity::TVP 
-    cfg::ForwardDiff.GradientConfig    
-end
-function JointTimeVaryingPropensityForwardDiff(f::TVP, species_count, parameter_count) where {TVP <: JointTimeVaryingPropensity}
-    return JointTimeVaryingPropensityForwardDiff(f, ForwardDiff.GradientConfig(nothing, zeros(species_count+parameter_count)), species_count, parameter_count)
-end
-function (g::JointTimeVaryingPropensityForwardDiff)(t::AbstractFloat, x::Vector, p::Vector)
-    return ForwardDiff.gradient(z->g.propensity(z[1], z[1:g.species_count],z[g.species_count+1:end]), [t;x;p], g.cfg)[end-g.parameter_count+1:end]
+function propensity_forwarddiff(f::JointTimeVaryingPropensity, parameter_count)
+    pardiffs = []
+    for ip in 1:parameter_count
+        push!(pardiffs, 
+            (t, x, p) -> ForwardDiff.derivative(z -> f(t, x,[p[1:ip-1];z;p[ip+1:end]]), p[ip])
+        )
+    end
+    return JointTimeVaryingPropensityGradient(pardiffs)
 end
 
-struct SeparableTimeVaryingPropensityForwardDiff{TVP <:SeparableTimeVaryingPropensity} <: TimeVaryingPropensityGradient 
-    species_count::Integer 
-    parameter_count::Integer
-    propensity::TVP 
-    tfactorcfg::ForwardDiff.GradientConfig
-    statefactorcfg::ForwardDiff.GradientConfig    
+function propensity_forwarddiff(f::SeparableTimeVaryingPropensity, parameter_count)
+    tfactor_pardiffs = []
+    for ip in 1:parameter_count
+        push!(tfactor_pardiffs, 
+            (t, p) -> ForwardDiff.derivative(z -> f.tfactor(t,[p[1:ip-1];z;p[ip+1:end]]), p[ip])
+        )
+    end
+    statefactor_pardiffs = []
+    for ip in 1:parameter_count
+        push!(statefactor_pardiffs, 
+            (x, p) -> ForwardDiff.derivative(z -> f.statefactor(x,[p[1:ip-1];z;p[ip+1:end]]), p[ip])
+        )
+    end
+    return SeparableTimeVaryingPropensityGradient(f.tfactor, f.statefactor, tfactor_pardiffs, statefactor_pardiffs)
 end
-function SeparableTimeVaryingPropensityForwardDiff(f::TVP, species_count, parameter_count) where {TVP <: SeparableTimeVaryingPropensity}
-    return SeparableTimeVaryingPropensityForwardDiff(species_count, parameter_count, f, ForwardDiff.GradientConfig(nothing, zeros(1+parameter_count)), ForwardDiff.GradientConfig(nothing, zeros(species_count+parameter_count)))
-end
-function tfactorgrad(g::SeparableTimeVaryingPropensityForwardDiff, t::AbstractFloat, p::AbstractVector)
-    return ForwardDiff.gradient(
-        z->g.propensity.tfactor(z[1], z[2:end]), [t;p], g.tfactorcfg
-    )[end-g.parameter_count+1:end]
-end
-function statefactorgrad(g::SeparableTimeVaryingPropensityForwardDiff, x::AbstractVector, p::AbstractVector)
-    return ForwardDiff.gradient(
-        z->g.propensity.statefactor(z[1:g.species_count], z[g.species_count+1:end]), [x;p], g.statefactorcfg
-    )[end-g.parameter_count+1:end]
-end
-function (g::SeparableTimeVaryingPropensityForwardDiff)(t::AbstractFloat, x::AbstractVector, p::AbstractVector)
-    return g.propensity.tfactor(t, p)*statefactorgrad(g, x, p) + g.propensity.statefactor(x, p)*tfactorgrad(g, t, p)
-end
-
-propensity_forwarddiff(f::SeparableTimeVaryingPropensity, species_count, parameter_count) = SeparableTimeVaryingPropensityForwardDiff(f, species_count, parameter_count)
-propensity_forwarddiff(f::JointTimeVaryingPropensity, species_count, parameter_count) = JointTimeVaryingPropensityForwardDiff(f, species_count, parameter_count)
-propensity_forwarddiff(f::StandardTimeInvariantPropensity, species_count, parameter_count) = StandardTimeInvariantPropensityForwardDiff(f, species_count, parameter_count)
