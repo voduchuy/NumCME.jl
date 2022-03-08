@@ -2,6 +2,7 @@ using Julifsp
 using Test 
 using BenchmarkTools
 using SparseArrays 
+using ForwardDiff
 
 𝕊 = [[-1, 1, 0] [1, -1, 0] [0, 0, 1] [0, 0, -1]]
 x₀ = [1, 0, 0]
@@ -36,13 +37,13 @@ test_times = 0.0:1.0:40.0
 
 a1grad(x, p) = [x[1], 0.0, 0.0, 0.0, 0.0]
 a2grad(x, p) = [0.0, x[2], 0.0, 0.0, 0.0]
-a3grad(x, p) = [0.0, 0.0, x[3], 0.0, 0.0]
+a3grad(x, p) = [0.0, 0.0, x[2], 0.0, 0.0]
 a4grad(t, x, p) = (1.0-sin(π*t/p[5]) > 0) ? [0.0, 0.0, 0.0, (1.0-sin(π*t/p[5]))*x[3], p[4]*x[3]*cos(π*t/p[5])*π*t/(p[5]^2)] : [0.0, 0.0, 0.0, 0.0, 0.0]
 propensity_grads = get_propensity_gradients(sensmodel)
 
-prod([a1grad(x, θ) ≈ propensity_grads[1](x, θ) for x in test_states])
-prod([a2grad(x, θ) ≈ propensity_grads[2](x, θ) for x in states])
-prod([a3grad(x, θ) ≈ propensity_grads[3](x, θ) for x in test_states])
+@test prod([a1grad(x, θ) ≈ propensity_grads[1](x, θ) for x in test_states])
+@test prod([a2grad(x, θ) ≈ propensity_grads[2](x, θ) for x in test_states])
+@test prod([a3grad(x, θ) ≈ propensity_grads[3](x, θ) for x in test_states])
 
 tmp = []
 for t in test_times 
@@ -57,8 +58,6 @@ end
 correct_sparsity = sparse([1, 2, 3, 4, 4],[1, 2, 3, 4, 5],[true, true, true, true, true])
 sparsity_patterns = get_gradient_sparsity_patterns(sensmodel)
 @test correct_sparsity ≈ sparsity_patterns
-
-
 
 
 

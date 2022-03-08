@@ -38,7 +38,7 @@ propensities_tvj = [α₁, α₂tvj, α₃, α₄]
 
 𝔛 = SparseStateSpace(𝕊, x₀)
 expand!(𝔛, 2)
-𝐀 = FspMatrixSparse(𝔛, propensities_ti, θ=θ)
+𝐀 = FspMatrixSparse(𝔛, propensities_ti, parameters=θ)
 @test size(𝐀, 1) == get_state_count(𝔛) + get_sink_count(𝔛)
 @test size(𝐀, 2) == get_state_count(𝔛) + get_sink_count(𝔛)
 𝐯 = ones(Float64, size(𝐀, 1))
@@ -50,7 +50,7 @@ expand!(𝔛, 2)
 # Test mat-vec for time-varying matrix
 𝔛 = SparseStateSpace(𝕊, x₀)
 expand!(𝔛, 2)
-A1 = FspMatrixSparse(𝔛, propensities_tv, θ=θ)
+A1 = FspMatrixSparse(𝔛, propensities_tv, parameters=θ)
 @test size(A1, 1) == get_state_count(𝔛) + get_sink_count(𝔛)
 @test size(A1, 2) == get_state_count(𝔛) + get_sink_count(𝔛)
 𝐯 = ones(Float64, size(A1, 1))
@@ -59,7 +59,7 @@ w1 = A1(1.0) * 𝐯
 w1 = A1 * 𝐯
 @test sum(w1) ≈ 0.0 atol = 1.0e-14
 
-A2 = FspMatrixSparse(𝔛, propensities_tvj, θ=θ)
+A2 = FspMatrixSparse(𝔛, propensities_tvj, parameters=θ)
 w2 = A2(1.0) * 𝐯
 @test sum(w2) ≈ 0.0 atol = 1.0e-14
 w2 = A2 * 𝐯
