@@ -21,16 +21,14 @@ end
 a3 = propensity() do x, p
     p[3] * x[2]
 end
-a4 = propensity_timevarying((t,p) -> max(0.0, 1.0-sin(π*t/p[5]))) do x, p
+a4 = propensity((t,p) -> max(0.0, 1.0-sin(π*t/p[5]))) do x, p
     p[4] * x[3]
 end
 propensities = [a1, a2, a3, a4]
-
-model = CmeModel(𝕊, propensities, θ)
-sensmodel = CmeModelWithSensitivity(model)
+sensmodel = CmeModelWithSensitivity(CmeModel(𝕊, propensities, θ))
 
 # Test correctness of the generated propensity gradients across multiple CME states and times
-test_space = SparseStateSpace(𝕊, x₀)
+test_space = StateSpaceSparse(𝕊, x₀)
 expand!(test_space, 100)
 test_states = get_states(test_space)
 test_times = 0.0:1.0:40.0

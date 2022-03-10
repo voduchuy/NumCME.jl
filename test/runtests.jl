@@ -1,4 +1,4 @@
-using EtFsp
+using Julifsp
 using Test
 
 
@@ -20,4 +20,8 @@ end
 
 @testset "Transient CME" begin 
     include("test_solver.jl")
+end
+
+@testset "ForwradSensFspMatrix" begin 
+    include("test_sensmat.jl")
 end

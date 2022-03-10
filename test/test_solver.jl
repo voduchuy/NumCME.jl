@@ -46,16 +46,20 @@ end
 
 
 bursting_model = CmeModel(𝕊, [a1, a2, a3, a4], [])
+@test typeof(bursting_model) <: CmeModel 
+
 bursting_model_parameterized = CmeModel(𝕊, [a1_p, a2_p, a3_p, a4_p], θ)
+@test typeof(bursting_model_parameterized) <: CmeModel 
 
 # Fixed FSP solver 
 # Solve to get dense outputs
 tspan = (0.0, 120.0)
-𝔛 = SparseStateSpace(𝕊, x₀)
+𝔛 = StateSpaceSparse(𝕊, x₀)
 expand!(𝔛, 20)
-p0 = SparseMultIdxVector(𝔛, [[1, 0, 0] => 1.0])
-fspmethod = FixedSparseFsp(CVODE_BDF(linear_solver = :GMRES))
-solutions = solve(bursting_model, p0, tspan, fspmethod, odertol = 1.0e-4, odeatol = 1.0e-14);
+p0 = MultIdxVectorSparse(𝔛, [[1, 0, 0] => 1.0])
+solutions = solve(bursting_model, p0, tspan, CVODE_BDF(linear_solver = :GMRES), odertol = 1.0e-4, odeatol = 1.0e-14);
+@test typeof(solutions) <: FspOutputSparse
+@test prod([typeof(solutions[i]) <: FspOutputSliceSparse for i in 1:length(solutions)])
 @test prod(
     [(sum(p) + sum(sinks) ≈ 1.0) for (p, sinks) in zip(solutions.p, solutions.sinks)
 ])
@@ -63,11 +67,10 @@ solutions = solve(bursting_model, p0, tspan, fspmethod, odertol = 1.0e-4, odeato
 # Solve to get outputs at specific times
 tspan = (0.0, 120.0)
 toutputs = 0.0:20.0:120.0
-𝔛 = SparseStateSpace(𝕊, x₀)
+𝔛 = StateSpaceSparse(𝕊, x₀)
 expand!(𝔛, 20)
-p0 = SparseMultIdxVector(𝔛, [[1, 0, 0] => 1.0])
-fspmethod = FixedSparseFsp(CVODE_BDF(linear_solver = :GMRES))
-solutions = solve(bursting_model, p0, tspan, fspmethod, odertol = 1.0e-4, odeatol = 1.0e-14, saveat = toutputs);
+p0 = MultIdxVectorSparse(𝔛, [[1, 0, 0] => 1.0])
+solutions = solve(bursting_model, p0, tspan, CVODE_BDF(linear_solver = :GMRES), odertol = 1.0e-4, odeatol = 1.0e-14, saveat = toutputs);
 @test prod(
     [(sum(p) + sum(sinks) ≈ 1.0) for (p, sinks) in zip(solutions.p, solutions.sinks)
 ])
@@ -76,8 +79,8 @@ solutions = solve(bursting_model, p0, tspan, fspmethod, odertol = 1.0e-4, odeato
 # Consistency between using parameter-free representation and parametric representation
 tspan = (0.0, 120.0)
 toutputs = 0.0:20.0:120.0
-p0 = SparseMultIdxVector(SparseStateSpace(𝕊, x₀), [x₀ => 1.0])
-fspmethod = AdaptiveSparseFsp(
+p0 = MultIdxVectorSparse(StateSpaceSparse(𝕊, x₀), [x₀ => 1.0])
+fspmethod = AdaptiveFspSparse(
     ode_method = CVODE_BDF(linear_solver = :GMRES),
     space_adapter = SelectiveRStepAdapter(10, 10, true)
 )

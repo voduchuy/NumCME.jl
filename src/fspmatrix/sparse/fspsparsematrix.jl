@@ -1,4 +1,3 @@
-
 import LinearAlgebra: mul!, axpy!
 import SparseArrays as SArrays
 
@@ -7,14 +6,14 @@ export FspMatrixSparse, get_parameters, get_states, get_rowcount, get_colcount, 
 """
 The transition rate matrix of the finite Markov chain approximation to the CME (including sink states). This type is based on the sparse representation of the truncated state space.
 """
-Base.@kwdef mutable struct FspMatrixSparse{NS,NR,PT<:Propensity,IntT<:Integer,RealT<:AbstractFloat} <: FspMatrix
+Base.@kwdef mutable struct FspMatrixSparse{NS,NR,IntT<:Integer,RealT<:AbstractFloat} <: FspMatrix
     parameters::Vector{Any}
     states::Vector{MVector{NS,IntT}}
 
     rowcount::IntT
     colcount::IntT
 
-    propensities::Vector{PT}
+    propensities::Vector{<:Propensity}
 
     timeinvariant_propensity_ids::Vector{IntT}
     timeinvariant_matrix::SparseMatrixCSC
@@ -38,11 +37,14 @@ get_separabletv_propensity_ids(A::FspMatrixSparse) = A.separabletv_propensity_id
 get_timeinvariant_propensity_ids(A::FspMatrixSparse) = A.timeinvariant_propensity_ids
 
 """
-FspMatrixSparse{RealT}(space::AbstractSparseStateSpace{NS,NR,IntT}, propensity_functions::Vector{PT}; θ = []) 
+FspMatrixSparse{RealT}(space::AbstractStateSpaceSparse{NS,NR,IntT}, propensity_functions::Vector{<:Propensity}; θ = []) 
 
-Return an instance of `FspMatrixSparse` type with nonzero entries of type `RealT`, based on a sparse state space of type `AbstractSparseStateSpace` and a vector `propensity_functions` of propensity functions. 
+Return an instance of `FspMatrixSparse` type with nonzero entries of type `RealT`, based on a sparse state space of type `AbstractStateSpaceSparse` and a vector `propensity_functions` of propensity functions. 
+
+# See also 
+`Propensity`
 """
-function FspMatrixSparse{RealT}(space::AbstractSparseStateSpace{NS,NR,IntT}, propensity_functions::Vector{PT}; parameters = []) where {NS,NR,PT<:Propensity,IntT<:Integer,RealT<:AbstractFloat}
+function FspMatrixSparse{RealT}(space::AbstractStateSpaceSparse{NS,NR,IntT,SizeT}, propensity_functions::Vector{<:Propensity}; parameters = []) where {NS,NR,IntT<:Integer,RealT<:AbstractFloat,SizeT<:Integer}
     state_count = get_state_count(space)
     sink_count = get_sink_count(space)
     rowcount = state_count + sink_count
@@ -82,14 +84,14 @@ function FspMatrixSparse{RealT}(space::AbstractSparseStateSpace{NS,NR,IntT}, pro
 
     jointtv_matrices = Vector{SparseMatrixCSC}()
     for reactionidx in jointtv_propensity_ids
-        rowindices, colindices, vals = _generate_sparsematrix_entries(space, nothing, reactionidx, θ = parameters, valtype=RealT)
+        rowindices, colindices, vals = _generate_sparsematrix_entries(space, nothing, reactionidx, parameters, valtype=RealT)
         push!(
             jointtv_matrices,
             sparse(rowindices, colindices, vals, rowcount, rowcount)
         )
     end
 
-    return FspMatrixSparse{NS,NR,PT,IntT,RealT}(
+    return FspMatrixSparse{NS,NR,IntT,RealT}(
         parameters = parameters,
         t_cache = -Inf,
         states = deepcopy(space.states),
@@ -106,16 +108,16 @@ function FspMatrixSparse{RealT}(space::AbstractSparseStateSpace{NS,NR,IntT}, pro
 end
 
 """
-FspMatrixSparse(space::AbstractSparseStateSpace, propensity_functions::Vector; θ = []) 
+FspMatrixSparse(space::AbstractStateSpaceSparse, propensity_functions::Vector; θ = []) 
 
-Return an instance of `FspMatrixSparse` type with double-precision(i.e.`Float64`) nonzero entries, based on a sparse state space of type `AbstractSparseStateSpace` and a vector `propensity_functions` of propensity functions. 
+Return an instance of `FspMatrixSparse` type with double-precision(i.e.`Float64`) nonzero entries, based on a sparse state space of type `AbstractStateSpaceSparse` and a vector `propensity_functions` of propensity functions. 
 """
-function FspMatrixSparse(space::AbstractSparseStateSpace{NS,NR,IntT}, propensity_functions::Vector{PT}; parameters = []) where {NS,NR,PT<:Propensity,IntT<:Integer}
+function FspMatrixSparse(space::AbstractStateSpaceSparse{NS,NR,IntT,SizeT}, propensity_functions::Vector{<:Propensity}; parameters = []) where {NS,NR,IntT<:Integer,SizeT<:Integer}
     return FspMatrixSparse{Float64}(space, propensity_functions; parameters)
 end
 
 
-function _generate_sparsematrix_entries(space::AbstractSparseStateSpace{NS,NR,IntT}, statefactor::Union{Nothing,Function}, reactionidx::Integer, θ::Vector = []; valtype::Type{RealT}=Float64) where {NS,NR,IntT<:Integer,RealT<:AbstractFloat}    
+function _generate_sparsematrix_entries(space::AbstractStateSpaceSparse{NS,NR,IntT,SizeT}, statefactor::Union{Nothing,Function}, reactionidx::Integer, θ::Vector = []; valtype::Type{RealT}=Float64) where {NS,NR,IntT<:Integer,RealT<:AbstractFloat,SizeT<:Integer}    
     state_count = get_state_count(space)
     rowindices = zeros(IntT, 2 * state_count)
     colindices = zeros(IntT, 2 * state_count)
@@ -195,6 +197,30 @@ function matvec!(out, t, A::FspMatrixSparse, v)
     else        
         # out .= A.timeinvariant_matrix*v
         SArrays.mul!(out, A.timeinvariant_matrix, v)
+    end
+    θ = A.parameters
+    for (i, r) in enumerate(A.separabletv_propensity_ids)
+        # out .+= A.propensities[r].tfactor(t, θ...)*A.separabletv_factormatrices[i]*v
+        SArrays.mul!(out, A.separabletv_factormatrices[i], v, A.propensities[r].tfactor(t, θ), 1)        
+    end    
+    needupdate = false
+    if t ≠ A.t_cache
+        needupdate = true
+        A.t_cache = t
+    end    
+    for (i, r) in enumerate(A.jointtv_propensity_ids)
+        (needupdate) && _update_sparsematrix!(A.jointtv_matrices[i], A.states, A.propensities[r],
+            t, θ)
+        # out .+= A.jointtv_matrices[i]*v 
+        SArrays.mul!(out, A.jointtv_matrices[i], v, 1.0, 1.0)                        
+    end
+    return nothing
+end
+
+export matvecadd!
+function matvecadd!(out, t, A::FspMatrixSparse, v)
+    if !(A.timeinvariant_matrix isa Nothing    )
+        SArrays.mul!(out, A.timeinvariant_matrix, v, 1, 1)
     end
     θ = A.parameters
     for (i, r) in enumerate(A.separabletv_propensity_ids)

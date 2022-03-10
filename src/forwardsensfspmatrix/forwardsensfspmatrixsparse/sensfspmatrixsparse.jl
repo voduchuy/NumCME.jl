@@ -2,10 +2,14 @@ export AbstractForwardSensFspMatrixSparse, ForwardSensFspMatrixSparse, matvec!
 
 abstract type AbstractForwardSensFspMatrixSparse <: ForwardSensFspMatrix end
 
-mutable struct ForwardSensFspMatrixSparse{NS,NR,PT<:Propensity,PGT<:PropensityGradient,IntT<:Integer,RealT<:AbstractFloat} <: AbstractForwardSensFspMatrixSparse
-    fspmatrix::FspMatrixSparse{NS,NR,PT,IntT,RealT}
+"""
+The time-varying matrix that defines the right-hand side of the truncated forward sensitivity Chemical Master Equation. 
+This type works with `StateSpaceSparse` subtypes and it uses `SparseMatrixCSC` type to internally represent component matrices.
+"""
+mutable struct ForwardSensFspMatrixSparse{NS,NR,IntT<:Integer,RealT<:AbstractFloat} <: AbstractForwardSensFspMatrixSparse
+    fspmatrix::FspMatrixSparse{NS,NR,IntT,RealT}
 
-    propensity_gradients::Vector{PGT}
+    propensity_gradients::Vector{<:PropensityGradient}
 
     timeinvariant_matdiffs::Vector{SparseMatrixCSC}
 
@@ -16,6 +20,7 @@ mutable struct ForwardSensFspMatrixSparse{NS,NR,PT<:Propensity,PGT<:PropensityGr
     jointtv_matdiff_sparsity_pattern::SparseMatrixCSC{Bool}
     jointtv_nzmatdiffs::Vector{SparseMatrixCSC}
 end
+
 get_propensity_gradients(SA::ForwardSensFspMatrixSparse) = SA.propensity_gradients
 get_timeinvariant_matdiffs(SA::ForwardSensFspMatrixSparse) = SA.timeinvariant_matdiffs
 get_separabletv_sparsity_pattern(SA::ForwardSensFspMatrixSparse) = SA.separabletv_matdiff_sparsity_pattern
@@ -24,7 +29,7 @@ get_separabletv_mat_map(SA::ForwardSensFspMatrixSparse) = SA.separabletv_mat_map
 get_jointtv_sparsity_pattern(SA::ForwardSensFspMatrixSparse) = SA.jointtv_matdiff_sparsity_pattern
 get_jointtv_nzmatdiffs(SA::ForwardSensFspMatrixSparse) = SA.jointtv_nzmatdiffs
 
-function ForwardSensFspMatrixSparse{RealT}(model::CmeModelWithSensitivity{IntT,PT,PGT}, statespace::SparseStateSpace{NS,NR,IntT,SizeT}) where {NS,NR,IntT<:Integer,PT<:Propensity,PGT<:PropensityGradient,SizeT<:Integer,RealT<:AbstractFloat}
+function ForwardSensFspMatrixSparse{RealT}(model::CmeModelWithSensitivity{IntT}, statespace::StateSpaceSparse{NS,NR,IntT,SizeT}) where {NS,NR,IntT<:Integer,SizeT<:Integer,RealT<:AbstractFloat}
     parameter_count = get_parameter_count(model)
     grad_sparsity_patterns = get_gradient_sparsity_patterns(model)
     propensity_gradients = get_propensity_gradients(model)
@@ -78,7 +83,7 @@ function ForwardSensFspMatrixSparse{RealT}(model::CmeModelWithSensitivity{IntT,P
     end
 
 
-    return ForwardSensFspMatrixSparse{NS,NR,PT,PGT,IntT,RealT}(
+    return ForwardSensFspMatrixSparse{NS,NR,IntT,RealT}(
         fspmatrix,
         propensity_gradients,
         timeinvariant_matdiffs,
@@ -97,7 +102,6 @@ function matvec!(out::AbstractVector{RealT}, t::AbstractFloat, SA::ForwardSensFs
     propensities = get_propensities(A)
     propensity_gradients = get_propensity_gradients(SA)
 
-    timeinvariant_ids = get_timeinvariant_propensity_ids(A)
     jointtv_ids = get_jointtv_propensity_ids(A)
     separabletv_ids = get_separabletv_propensity_ids(A)
 
@@ -115,24 +119,25 @@ function matvec!(out::AbstractVector{RealT}, t::AbstractFloat, SA::ForwardSensFs
     for ip in 1:parameter_count
         outview = view(out, ip*n+1:(ip+1)*n)
         vsview = view(vs, ip*n+1:(ip+1)*n)
+        matvecadd!(outview, t, A, vsview)
 
-        mul!(outview, ti_matdiffs[ip], vsview)
+        mul!(outview, ti_matdiffs[ip], view(vs, 1:n))        
 
         for i in nzrange(septv_pattern, ip)
             r = separabletv_ids[SparseArrays.getrowval(septv_pattern)[i]]
 
-            tfactordiff = get_single_tfactor_pardiff(propensity_gradients[r], ip)
-            mul!(outview, septv_matdiffs[i], vsview, propensities[r].tfactor(t, θ), 1.0)
-
+            mul!(outview, septv_matdiffs[i], view(vs, 1:n), propensities[r].tfactor(t, θ), 1.0)
+            
             j = septv_map[i]
-            mul!(outview, A.separabletv_factormatrices[j], vsview, tfactordiff(t, θ), 1.0)
+            tfactordiff = get_single_tfactor_pardiff(propensity_gradients[r], ip)
+            mul!(outview, A.separabletv_factormatrices[j], view(vs, 1:n), tfactordiff(t, θ), 1.0)
         end
 
         for i in nzrange(jointtv_pattern, ip)
             r = jointtv_ids[SparseArrays.getrowval(jointtv_pattern)[i]]
             pdiff = get_single_pardiff(propensity_gradients[r], ip)
             _update_sparsematrix!(jointtv_matdiffs[i], A.states, pdiff, t, θ)
-            mul!(outview, jointtv_matdiffs[i], vsview, 1, 1)
+            mul!(outview, jointtv_matdiffs[i], view(vs, 1:n), 1, 1)
         end
     end
     return nothing

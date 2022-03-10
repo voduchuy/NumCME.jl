@@ -8,6 +8,7 @@ include("fspvector/fspvector.jl")
 include("fspmatrix/fspmatrix.jl")
 include("transientcme/transientcme.jl")
 include("forwardsensfspmatrix/forwardsensfspmatrix.jl")
+include("forwardsenscme/forwardsenscme.jl")
 end
 
  

@@ -4,31 +4,100 @@ export get_propensity_gradients, get_gradient_sparsity_patterns
 include("propensity.jl")
 include("propensitygrad.jl")
 
-struct CmeModel{IntT<:Integer,PT<:Propensity}
+"""
+Stochastic reaction network model.
+
+## Fields 
     stoich_matrix::Matrix{IntT}
+(Net) stoichiometry matrix. Column `i` represents the net change to molecular counts due to reaction `i`.
+
     propensities::Vector{PT}
+Propensity functions. 
+
+    parameters::AbstractVector
+Parameters.
+
+## Examples
+
+The following code constructs a CmeModel instance for the two-state telegraphic gene expression model.
+    
+```julia
+𝕊 = [[-1, 1, 0] [1, -1, 0] [0, 0, 1] [0, 0, -1]] # Net stoichiometry matrix for 3 species `inactive_gene`, `activated_gene`, `mRNA`
+a1 = propensity() do x, p
+    p[1] * x[1]
+end
+a2 = propensity() do x, p
+    p[2] * x[2]
+end
+a3 = propensity() do x, p
+    p[3] * x[2]
+end
+a4 = propensity() do x, p
+    p[4] * x[3]
+end
+k₀₁ = 0.05
+k₁₀ = 0.1
+λ = 5.0
+γ = 0.5
+θ = [k₀₁, k₁₀, λ, γ]
+model = CmeModel(𝕊, [a1,a2,a3,a4], θ)
+```
+
+## See also 
+`CmeModelWithSensitivity`, `Propensity`, `StandardTimeInvariantPropensity`, `JointTimeVaryingPropensity`, `SeparableTimeVaryingPropensity`.
+"""
+struct CmeModel{IntT<:Integer}
+    stoich_matrix::Matrix{IntT}
+    propensities::Vector{<:Propensity}
     parameters::AbstractVector
 end
 # Accessors 
 get_parameters(model::CmeModel) = model.parameters
 get_species_count(model::CmeModel) = size(model.stoich_matrix, 1)
-get_reaciton_count(model::CmeModel) = size(model.stoich_matrix, 2)
+get_reaction_count(model::CmeModel) = size(model.stoich_matrix, 2)
 get_parameter_count(model::CmeModel) = length(model.parameters)
 get_stoich_matrix(model::CmeModel) = model.stoich_matrix
 get_propensities(model::CmeModel) = model.propensities
 
-mutable struct CmeModelWithSensitivity{IntT<:Integer,PT<:Propensity,PGradT<:PropensityGradient}
-    cmemodel::CmeModel{IntT, PT}
+# Pretty printing for CmeModel
+using Printf 
+function Base.show(io::IO, model::CmeModel)
+    println(io, "Stochastic reaction network with $(get_species_count(model)) species, $(get_reaction_count(model)) reactions and $(get_parameter_count(model)) parameters.")
+    println(io, "Net stoichiometry matrix")
+    Base.print_matrix(io, model.stoich_matrix)
+    println(io)
+    nothing 
+end
+
+"""
+    CmeModelWithSensitivity
+
+Stochastic reaction network model with information about gradient of the propensity functions with respect to parameters. 
+
+## See also 
+`PropensityGradient`
+"""
+mutable struct CmeModelWithSensitivity{IntT<:Integer}
+    cmemodel::CmeModel{IntT}
     gradient_sparsity_patterns::SparseMatrixCSC
-    propensity_gradients::Vector{PGradT}
+    propensity_gradients::Vector{<:PropensityGradient}
 end
 # Accessors 
+get_parameters(model::CmeModelWithSensitivity) = get_parameters(model.cmemodel)
+get_species_count(model::CmeModelWithSensitivity) = get_species_count(model.cmemodel)
+get_reaction_count(model::CmeModelWithSensitivity) = get_reaction_count(model.cmemodel)
+get_parameter_count(model::CmeModelWithSensitivity) = get_parameter_count(model.cmemodel)
+get_stoich_matrix(model::CmeModelWithSensitivity) = get_stoich_matrix(model.cmemodel)
+get_propensities(model::CmeModelWithSensitivity) = get_propensities(model.cmemodel)
 get_gradient_sparsity_patterns(model::CmeModelWithSensitivity) = model.gradient_sparsity_patterns
 get_propensity_gradients(model::CmeModelWithSensitivity) = model.propensity_gradients
-@forward((CmeModelWithSensitivity, :cmemodel), CmeModel)
 
 
-# Generate a CME model with sensitivity from a CME model using ForwardDiff automatic differentiation 
+"""
+    CmeModelWithSensitivity(model::CmeModel)
+
+Construct a CME model with sensitivity from a CME model (without sensitivity information) using `ForwardDiff.jl` automatic differentiation. 
+"""
 function CmeModelWithSensitivity(model::CmeModel)
     species_count = get_species_count(model)
     parameter_count = get_parameter_count(model)
@@ -42,4 +111,20 @@ function CmeModelWithSensitivity(model::CmeModel)
         gradient_sparsity_patterns,
         propensity_gradients
     )
+end
+
+"""
+    CmeModelWithSensitivity(stoich_matrix, propensities::Vector{PT}, parameters::AbstractVector) where {PT <: Propensity}
+
+Construct a CME model with sensitivity information using a net stoichiometry matrix `stoich_matrix` and propensity functions `propensities` and parameters `parameters`. The partial derivatives of the propensity functions with respect to parameters are automatically derived using automatic differentiation.
+"""
+CmeModelWithSensitivity(stoich_matrix, propensities::Vector{<:Propensity}, parameters::AbstractVector) where {PT <: Propensity} = CmeModelWithSensitivity(CmeModel(stoich_matrix, propensities, parameters))
+
+# Pretty printing for CmeModelWithSensitivity
+using Printf 
+function Base.show(io::IO, model::CmeModelWithSensitivity)
+    Base.show(model.cmemodel)
+    println(io, "Propensity gradient sparsity pattern (reaction × parameter):")
+    Base.print_matrix(io, get_gradient_sparsity_patterns(model))
+    nothing 
 end
