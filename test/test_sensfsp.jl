@@ -23,22 +23,20 @@ a4 = propensity((t, p) -> max(0.0, 1.0 - sin(π * t / p[5]))) do x, p
     p[4] * x[3]
 end
 propensities = [a1, a2, a3, a4]
-
 sensmodel = CmeModelWithSensitivity(CmeModel(𝕊, propensities, θ))
 init_cond = forwardsens_initial_condition([x₀], [1.0], [[0.0] for i in 1:5])
-
 sensfspalgorithm = AdaptiveForwardSensFspSparse(
     ode_method = CVODE_BDF(linear_solver = :GMRES),
     space_adapter = ForwardSensRStepAdapter(10, 10, true)
 )
-senssol = solve(sensmodel,
+@time senssol = solve(sensmodel,
     init_cond,
     (0.0, 400.0),
     sensfspalgorithm;
-    saveat = [0.0, 100.0, 200.0, 400.0],
-    fsptol = 1.0E-8,
-    odeatol = 1.0E-14,
-    odertol = 1.0E-6);
+    saveat = [],
+    fsptol = 1.0E-6,
+    odeatol = 1.0E-10,
+    odertol = 1.0E-4)
 
 
 

@@ -5,7 +5,7 @@ abstract type AbstractFspVector end
 """
     FspVectorSparse{NS, IntT<:Integer, RealT<:AbstractFloat} <: AbstractFspVector 
 
-Sparse multi-indexed vector (i.e., sparse "tensor") with entries of type `RealT` and multi-indices of type `IntT`.   
+Sparse multi-indexed vector (i.e., sparse "tensor") with entries of type `RealT` and multi-indices of type `IntT` for storing CME solution and sensitivity vectors output by the Finite State Projection.   
 """
 Base.@kwdef mutable struct FspVectorSparse{NS,IntT<:Integer,RealT<:AbstractFloat} <: AbstractFspVector
     states::Vector{MVector{NS,IntT}}
@@ -36,8 +36,8 @@ end
 Construct a sparse representation of a FSP-truncated probability distribution on the state space `statespace` and proability values `values`.
 """
 function FspVectorSparse(statespace::AbstractStateSpaceSparse{NS,NR,IntT}, statevalpairs::Vector{Pair{VecT,RealT}}) where {NS,NR,IntT<:Integer,VecT<:AbstractVector,RealT<:AbstractFloat}
-    states = deepcopy(statespace.states)
-    state2idx = deepcopy(statespace.state2idx)
+    states = deepcopy(get_states(statespace))
+    state2idx = deepcopy(get_statedict(statespace))
     values = zeros(RealT, get_state_count(statespace))
     for (x, v) in statevalpairs
         idx = get(state2idx, x, 0)
@@ -54,6 +54,11 @@ function Base.sum(p::FspVectorSparse)
     Base.sum(p.values)
 end
 
+"""
+    sum(p::FspVectorSparse, dims)
+
+Reduce the FSP vector `p` by summing over species specified in `dims` and return a new FSP vector over a reduced-dimension state space.
+"""
 function Base.sum(p::FspVectorSparse{NS,IntT,RealT}, dims::AbstractVector{<:Integer})::FspVectorSparse where {NS,IntT<:Integer,RealT<:AbstractFloat}
     dims = unique(dims)
     !((min(dims...) >= 1) && (max(dims...) <= NS)) && throw(ArgumentError("Input dimensions must be between 1 and $(NS)."))
@@ -90,6 +95,11 @@ function Base.sum(p::FspVectorSparse{NS,IntT,RealT}, dims::AbstractVector{<:Inte
     )
 end
 
+"""
+    Array(p::FspVectorSparse)
+
+Construct a new dense `N`-dimensional array from the FSP vector.
+"""
 function Base.Array(p::FspVectorSparse{NS,IntT,RealT}) where {NS, IntT<:Integer, RealT<:AbstractFloat}
     states = get_states(p)
     if isempty(states)
