@@ -1,6 +1,6 @@
 export propensitygrad_sparsity_pattern
 
-function propensitygrad_sparsity_pattern(speciescount, parametercount, propensities)    
+function propensitygrad_sparsity_pattern(speciescount, parametercount, propensities, parameters)    
     exprs = ""
     for i in 1:length(propensities)
         if istimevarying(propensities[i])
@@ -18,7 +18,7 @@ function propensitygrad_sparsity_pattern(speciescount, parametercount, propensit
         end
         prop
     end)
-    input = [[1.0]; ones(Int32, speciescount); rand(parametercount)]
+    input = [[1.0]; ones(Int32, speciescount); parameters]
     output = zeros(length(propensities))
     sparsity_pattern = jacobian_sparsity(F, output, input, propensities, verbose=false)
     return sparsity_pattern[:, speciescount+2:end]

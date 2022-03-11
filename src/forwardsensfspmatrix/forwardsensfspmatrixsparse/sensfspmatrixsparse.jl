@@ -20,7 +20,6 @@ mutable struct ForwardSensFspMatrixSparse{NS,NR,IntT<:Integer,RealT<:AbstractFlo
     jointtv_matdiff_sparsity_pattern::SparseMatrixCSC{Bool}
     jointtv_nzmatdiffs::Vector{SparseMatrixCSC}
 end
-
 get_propensity_gradients(SA::ForwardSensFspMatrixSparse) = SA.propensity_gradients
 get_timeinvariant_matdiffs(SA::ForwardSensFspMatrixSparse) = SA.timeinvariant_matdiffs
 get_separabletv_sparsity_pattern(SA::ForwardSensFspMatrixSparse) = SA.separabletv_matdiff_sparsity_pattern
@@ -114,15 +113,14 @@ function matvec!(out::AbstractVector{RealT}, t::AbstractFloat, SA::ForwardSensFs
     jointtv_pattern = get_jointtv_sparsity_pattern(SA)
     jointtv_matdiffs = get_jointtv_nzmatdiffs(SA)
 
-    n = get_rowcount(SA.fspmatrix)
+    n = get_rowcount(A)
     matvec!(view(out, 1:n), t, A, view(vs, 1:n))
     for ip in 1:parameter_count
         outview = view(out, ip*n+1:(ip+1)*n)
         vsview = view(vs, ip*n+1:(ip+1)*n)
-        matvecadd!(outview, t, A, vsview)
+        matvec!(outview, t, A, vsview)
 
-        mul!(outview, ti_matdiffs[ip], view(vs, 1:n))        
-
+        mul!(outview, ti_matdiffs[ip], view(vs, 1:n), 1, 1)        
         for i in nzrange(septv_pattern, ip)
             r = separabletv_ids[SparseArrays.getrowval(septv_pattern)[i]]
 

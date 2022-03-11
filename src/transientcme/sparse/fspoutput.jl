@@ -2,20 +2,20 @@ export FspOutputSparse, FspOutputSliceSparse
 
 Base.@kwdef struct FspOutputSparse{NS,IntT<:Integer,RealT<:AbstractFloat}
     t::Vector{RealT}
-    p::Vector{MultIdxVectorSparse{NS,IntT,RealT}}
+    p::Vector{FspVectorSparse{NS,IntT,RealT}}
     sinks::Vector{Vector{RealT}}
 end
 
 struct FspOutputSliceSparse
     t::AbstractFloat 
-    p::MultIdxVectorSparse
+    p::FspVectorSparse
     sinks::Vector
 end
 
 function FspOutputSparse{NS}() where {NS, IntT <: Integer, RealT <: AbstractFloat}
     return FspOutputSparse{NS, Int64, Float64}(
         t = Vector{Float64}(),
-        p = Vector{MultIdxVectorSparse{NS, IntT, RealT}}(),
+        p = Vector{FspVectorSparse{NS, IntT, RealT}}(),
         sinks = Vector{Vector{RealT}}()
     )
 end

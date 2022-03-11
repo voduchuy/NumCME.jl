@@ -1,29 +1,29 @@
-export AbstractMultIdxVector, MultIdxVectorSparse, sum, get_states, get_values, get_statedict 
+export AbstractFspVector, FspVectorSparse, sum, get_states, get_values, get_statedict 
 
-abstract type AbstractMultIdxVector end
+abstract type AbstractFspVector end
 
 """
-    MultIdxVectorSparse{NS, IntT<:Integer, RealT<:AbstractFloat} <: AbstractMultIdxVector 
+    FspVectorSparse{NS, IntT<:Integer, RealT<:AbstractFloat} <: AbstractFspVector 
 
 Sparse multi-indexed vector (i.e., sparse "tensor") with entries of type `RealT` and multi-indices of type `IntT`.   
 """
-Base.@kwdef mutable struct MultIdxVectorSparse{NS,IntT<:Integer,RealT<:AbstractFloat} <: AbstractMultIdxVector
+Base.@kwdef mutable struct FspVectorSparse{NS,IntT<:Integer,RealT<:AbstractFloat} <: AbstractFspVector
     states::Vector{MVector{NS,IntT}}
     values::Vector{RealT}
     state2idx::Dict{MVector{NS,IntT},IntT}
 end
-get_states(v::MultIdxVectorSparse) = v.states
-get_values(v::MultIdxVectorSparse) = v.values
-get_statedict(v::MultIdxVectorSparse) = v.state2idx
+get_states(v::FspVectorSparse) = v.states
+get_values(v::FspVectorSparse) = v.values
+get_statedict(v::FspVectorSparse) = v.state2idx
 
 """
-    MultIdxVectorSparse(states::Vector{MVector{NS, IntT}}, values::Vector{RealT})
+    FspVectorSparse(states::Vector{MVector{NS, IntT}}, values::Vector{RealT})
 
 Construct a sparse representation of a FSP-truncated probability distribution with support `states` and proability values `values`.
 """
-function MultIdxVectorSparse(states::Vector{MVector{NS,IntT}}, values::Vector{RealT}; checksizes::Bool = true) where {NS,IntT<:Integer,RealT<:AbstractFloat}
+function FspVectorSparse(states::Vector{MVector{NS,IntT}}, values::Vector{RealT}; checksizes::Bool = true) where {NS,IntT<:Integer,RealT<:AbstractFloat}
     checksizes && (length(states) ≠ length(values)) && throw(ArgumentError("State and value lists must have equal lengths."))
-    return MultIdxVectorSparse{NS,IntT,RealT}(
+    return FspVectorSparse{NS,IntT,RealT}(
         states = deepcopy(states),
         values = deepcopy(values),
         state2idx = Dict([x => i for (i, x) in enumerate(states)])
@@ -31,11 +31,11 @@ function MultIdxVectorSparse(states::Vector{MVector{NS,IntT}}, values::Vector{Re
 end
 
 """
-    MultIdxVectorSparse(statespace::AbstractStateSpaceSparse{NS, NR, IntT}, statevalpairs::Vector{Pair{VecT, RealT}})
+    FspVectorSparse(statespace::AbstractStateSpaceSparse{NS, NR, IntT}, statevalpairs::Vector{Pair{VecT, RealT}})
 
 Construct a sparse representation of a FSP-truncated probability distribution on the state space `statespace` and proability values `values`.
 """
-function MultIdxVectorSparse(statespace::AbstractStateSpaceSparse{NS,NR,IntT}, statevalpairs::Vector{Pair{VecT,RealT}}) where {NS,NR,IntT<:Integer,VecT<:AbstractVector,RealT<:AbstractFloat}
+function FspVectorSparse(statespace::AbstractStateSpaceSparse{NS,NR,IntT}, statevalpairs::Vector{Pair{VecT,RealT}}) where {NS,NR,IntT<:Integer,VecT<:AbstractVector,RealT<:AbstractFloat}
     states = deepcopy(statespace.states)
     state2idx = deepcopy(statespace.state2idx)
     values = zeros(RealT, get_state_count(statespace))
@@ -43,18 +43,18 @@ function MultIdxVectorSparse(statespace::AbstractStateSpaceSparse{NS,NR,IntT}, s
         idx = get(state2idx, x, 0)
         (idx ≠ 0) && (values[idx] = v)
     end
-    return MultIdxVectorSparse{NS,IntT,RealT}(
+    return FspVectorSparse{NS,IntT,RealT}(
         states = states,
         values = values,
         state2idx = state2idx
     )
 end
 
-function Base.sum(p::MultIdxVectorSparse)
+function Base.sum(p::FspVectorSparse)
     Base.sum(p.values)
 end
 
-function Base.sum(p::MultIdxVectorSparse{NS,IntT,RealT}, dims::AbstractVector{<:Integer})::MultIdxVectorSparse where {NS,IntT<:Integer,RealT<:AbstractFloat}
+function Base.sum(p::FspVectorSparse{NS,IntT,RealT}, dims::AbstractVector{<:Integer})::FspVectorSparse where {NS,IntT<:Integer,RealT<:AbstractFloat}
     dims = unique(dims)
     !((min(dims...) >= 1) && (max(dims...) <= NS)) && throw(ArgumentError("Input dimensions must be between 1 and $(NS)."))
 
@@ -83,15 +83,39 @@ function Base.sum(p::MultIdxVectorSparse{NS,IntT,RealT}, dims::AbstractVector{<:
         end
     end
 
-    return MultIdxVectorSparse{reduced_species_count,IntT,RealT}(
+    return FspVectorSparse{reduced_species_count,IntT,RealT}(
         states = reduced_states,
         values = reduced_vals,
         state2idx = reduced_state2idx
     )
 end
 
+function Base.Array(p::FspVectorSparse{NS,IntT,RealT}) where {NS, IntT<:Integer, RealT<:AbstractFloat}
+    states = get_states(p)
+    if isempty(states)
+        throw(ArgumentError("Cannot construct dense array from empty FspVector instance."))
+    end
+    values = get_values(p)
+
+    dimcount = length(states[1])
+    bounds = zeros(Int, dimcount)
+    for eachstate in states 
+        for i in 1:dimcount 
+            bounds[i] = max(bounds[i], eachstate[i]+1)
+        end
+    end
+
+    out = zeros(RealT, bounds...)
+    tmp = MVector{NS,IntT}([0 for i in 1:NS])
+    for i in 1:length(values)
+        tmp .= states[i] .+ 1
+        out[tmp...] = values[i]
+    end
+    return out 
+end
+
 using Printf
-function Base.show(io::IO, vec::MultIdxVectorSparse)
+function Base.show(io::IO, vec::FspVectorSparse)
     nz = length(vec.values)
     if nz == 0
         println(io, "Sparse multi-indexed vector with no nonzero entries.")

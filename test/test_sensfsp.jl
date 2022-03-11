@@ -36,9 +36,9 @@ senssol = solve(sensmodel,
     (0.0, 400.0),
     sensfspalgorithm;
     saveat = [0.0, 100.0, 200.0, 400.0],
-    fsptol = 1.0E-6,
-    odeatol = 1.0E-10,
-    odertol = 1.0E-4);
+    fsptol = 1.0E-8,
+    odeatol = 1.0E-14,
+    odertol = 1.0E-6);
 
 
 

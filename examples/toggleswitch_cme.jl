@@ -59,7 +59,7 @@ model_separable = CmeModel(𝕊, propensities_separable, θ)
 
 x₀ = [0, 0]
 𝔛₀ = StateSpaceSparse(𝕊, x₀)
-p0 = MultIdxVectorSparse(𝔛₀, [x₀ => 1.0])
+p0 = FspVectorSparse(𝔛₀, [x₀ => 1.0])
 
 tspan = (0.0, 8.0 * 3600)
 saveat = 0.0:60.0:8*3600.0

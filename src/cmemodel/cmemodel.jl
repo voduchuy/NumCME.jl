@@ -101,7 +101,7 @@ Construct a CME model with sensitivity from a CME model (without sensitivity inf
 function CmeModelWithSensitivity(model::CmeModel)
     species_count = get_species_count(model)
     parameter_count = get_parameter_count(model)
-    gradient_sparsity_patterns = propensitygrad_sparsity_pattern(species_count, parameter_count, get_propensities(model))
+    gradient_sparsity_patterns = propensitygrad_sparsity_pattern(species_count, parameter_count, get_propensities(model), get_parameters(model))
     propensity_gradients = Vector{PropensityGradient}()
     for propensity in get_propensities(model)
         push!(propensity_gradients, propensity_forwarddiff(propensity, parameter_count))

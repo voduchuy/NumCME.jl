@@ -1,8 +1,6 @@
 using Julifsp
 using BenchmarkTools
-import DifferentialEquations as DE
 using Sundials: CVODE_BDF
-using StaticArrays
 
 ## Bursting gene model 
 𝕊 = [[-1, 1, 0] [1, -1, 0] [0, 0, 1] [0, 0, -1]]
@@ -29,19 +27,19 @@ end
 model = CmeModel(𝕊, [a1,a2,a3,a4], θ)
 𝔛₀ = StateSpaceSparse(model.stoich_matrix, x₀)
 expand!(𝔛₀, 10)
-p0 = MultIdxVectorSparse(𝔛₀, [x₀=>1.0])
+p0 = FspVectorSparse(𝔛₀, [x₀=>1.0])
 tspan = (0.0, 300.0)
 
-fixedrstepfsp = AdaptiveFspSparse(
+fullrstepfsp = AdaptiveFspSparse(
     ode_method = CVODE_BDF(linear_solver=:GMRES),
     space_adapter = RStepAdapter(5, 10, true)
 )
-adaptiverstepfsp = AdaptiveFspSparse(
+selectiverstepfsp = AdaptiveFspSparse(
     ode_method = CVODE_BDF(linear_solver=:GMRES),
     space_adapter = SelectiveRStepAdapter(5, 10, true)
 )
-@btime fspsol1 = solve(model, p0, tspan, fixedrstepfsp, saveat=0.0:20.0:300.0);
-@btime fspsol2 = solve(model, p0, tspan, adaptiverstepfsp, saveat=0.0:20.0:300.0);
+@btime fspsol1 = solve(model, p0, tspan, fullrstepfsp, saveat=0.0:20.0:300.0);
+@btime fspsol2 = solve(model, p0, tspan, selectiverstepfsp, saveat=0.0:20.0:300.0);
 
 
 

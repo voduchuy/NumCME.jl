@@ -58,9 +58,9 @@ function solve(model::CmeModelWithSensitivity,
 
     output = ForwardSensFspOutputSparse{NS,IntT,RealT}(
         t = Vector{RealT}(),
-        p = Vector{MultIdxVectorSparse{NS,IntT,RealT}}(),
+        p = Vector{FspVectorSparse{NS,IntT,RealT}}(),
         sinks = Vector{Vector{RealT}}(),
-        S = Vector{Vector{MultIdxVectorSparse{NS,IntT,RealT}}}(),
+        S = Vector{Vector{FspVectorSparse{NS,IntT,RealT}}}(),
         dsinks = Vector{Vector{Vector{RealT}}}()
     )        
     
@@ -101,9 +101,9 @@ function solve(model::CmeModelWithSensitivity,
 
         for (t, u) in zip(integrator.sol.t, integrator.sol.u)
             push!(output.t, t)
-            push!(output.p, MultIdxVectorSparse(statespace.states, u[1:n-sink_count]))
+            push!(output.p, FspVectorSparse(statespace.states, u[1:n-sink_count]))
             push!(output.sinks, u[n-sink_count+1:n])
-            push!(output.S, [MultIdxVectorSparse(get_states(statespace), u[ip*n+1:(ip+1)*n-sink_count]) for ip in 1:parameter_count])
+            push!(output.S, [FspVectorSparse(get_states(statespace), u[ip*n+1:(ip+1)*n-sink_count]) for ip in 1:parameter_count])
             push!(output.dsinks, [u[(ip+1)*n-sink_count+1:(ip+1)*n] for ip in 1:parameter_count])
         end
 
@@ -136,9 +136,9 @@ function solve(model::CmeModelWithSensitivity,
         else # Otherwise, add the final slice to the output
             u = integrator.u            
             push!(output.t, tnow)
-            push!(output.p, MultIdxVectorSparse(statespace.states, u[1:n-sink_count]))
+            push!(output.p, FspVectorSparse(statespace.states, u[1:n-sink_count]))
             push!(output.sinks, u[n-sink_count+1:n])
-            push!(output.S, [MultIdxVectorSparse(get_states(statespace), u[ip*n+1:ip*n+n-sink_count]) for ip in 1:parameter_count])
+            push!(output.S, [FspVectorSparse(get_states(statespace), u[ip*n+1:ip*n+n-sink_count]) for ip in 1:parameter_count])
             push!(output.dsinks, [u[ip*n+n-sink_count+1:ip*n+n] for ip in 1:parameter_count])
         end
     end

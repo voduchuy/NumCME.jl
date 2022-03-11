@@ -7,7 +7,7 @@ include("fspoutput.jl")
 include("spaceadapters.jl")
 
 function solve(model::CmeModel,
-    initial_distribution::MultIdxVectorSparse{NS,IntT,RealT},
+    initial_distribution::FspVectorSparse{NS,IntT,RealT},
     tspan::Union{Vector,Tuple},
     ode_method::Union{Nothing,AbstractODEAlgorithm}; 
     saveat = [], fsptol::AbstractFloat = 1.0E-6, odeatol::AbstractFloat = 1.0E-10, odertol::AbstractFloat = 1.0E-4) where {NS,IntT<:Integer,RealT<:AbstractFloat}
@@ -27,12 +27,12 @@ function solve(model::CmeModel,
 
     output = FspOutputSparse{NS,IntT,RealT}(
         t = Vector{RealT}(),
-        p = Vector{MultIdxVectorSparse{NS,IntT,RealT}}(),
+        p = Vector{FspVectorSparse{NS,IntT,RealT}}(),
         sinks = Vector{Vector{RealT}}()
     )
     for (t, u) in zip(solutions.t, solutions.u)
         push!(output.t, t)
-        push!(output.p, MultIdxVectorSparse(statespace.states, u[1:end-sink_count]))
+        push!(output.p, FspVectorSparse(statespace.states, u[1:end-sink_count]))
         push!(output.sinks, u[end-sink_count+1:end])
     end
 
@@ -105,7 +105,7 @@ An instance of `FspOutputSparse`.
 `CmeModel`, `AdaptiveFspSparse`, `FspOutputSparse`.
 """
 function solve(model::CmeModel,
-    initial_distribution::MultIdxVectorSparse{NS,IntT,RealT},
+    initial_distribution::FspVectorSparse{NS,IntT,RealT},
     tspan::Tuple{AbstractFloat,AbstractFloat},
     fspalgorithm::AdaptiveFspSparse; saveat = [], fsptol::AbstractFloat = 1.0E-6,
     odeatol::AbstractFloat = 1.0E-10,
@@ -126,7 +126,7 @@ function solve(model::CmeModel,
 
     output = FspOutputSparse{NS,IntT,RealT}(
         t = Vector{RealT}(),
-            p = Vector{MultIdxVectorSparse{NS,IntT,RealT}}(),
+            p = Vector{FspVectorSparse{NS,IntT,RealT}}(),
             sinks = Vector{Vector{RealT}}()
         )
     while tnow < tend
@@ -158,7 +158,7 @@ function solve(model::CmeModel,
 
         for (t, u) in zip(integrator.sol.t, integrator.sol.u)
             push!(output.t, t)
-            push!(output.p, MultIdxVectorSparse(statespace.states, u[1:end-sink_count]))
+            push!(output.p, FspVectorSparse(statespace.states, u[1:end-sink_count]))
             push!(output.sinks, u[end-sink_count+1:end])
         end
 
@@ -181,7 +181,7 @@ function solve(model::CmeModel,
         else # Otherwise, add the final slice to the output
             u = integrator.u
             push!(output.t, tnow)
-            push!(output.p, MultIdxVectorSparse(statespace.states, u[1:end-sink_count]))
+            push!(output.p, FspVectorSparse(statespace.states, u[1:end-sink_count]))
             push!(output.sinks, u[end-sink_count+1:end])
         end
     end

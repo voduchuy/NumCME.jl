@@ -1,16 +1,16 @@
 Base.@kwdef mutable struct ForwardSensFspOutputSparse{NS,IntT<:Integer,RealT<:AbstractFloat}
     t::Vector{RealT}
-    p::Vector{MultIdxVectorSparse{NS,IntT,RealT}}
+    p::Vector{FspVectorSparse{NS,IntT,RealT}}
     sinks::Vector{AbstractVector{RealT}}
-    S::Vector{Vector{MultIdxVectorSparse{NS,IntT,RealT}}}
+    S::Vector{Vector{FspVectorSparse{NS,IntT,RealT}}}
     dsinks::Vector{Vector{AbstractVector{RealT}}}
 end
 
 mutable struct ForwardSensFspOutputSliceSparse{NS,IntT<:Integer,RealT<:AbstractFloat}
     t::RealT
-    p::MultIdxVectorSparse{NS,IntT,RealT}
+    p::FspVectorSparse{NS,IntT,RealT}
     sinks::AbstractVector{RealT}
-    S::Vector{MultIdxVectorSparse{NS,IntT,RealT}}
+    S::Vector{FspVectorSparse{NS,IntT,RealT}}
     dsinks::Vector{AbstractVector{RealT}}
 end
 
