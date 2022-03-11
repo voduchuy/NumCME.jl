@@ -1,4 +1,4 @@
-export Propensity, TimeInvariantPropensity, TimeVaryingPropensity, propensity, propensity_timevarying, istimeseparable, istimevarying
+export Propensity, TimeInvariantPropensity, TimeVaryingPropensity, propensity, propensity, istimeseparable, istimevarying
 export StandardTimeInvariantPropensity, SeparableTimeVaryingPropensity, JointTimeVaryingPropensity
 export PropensityGradient, TimeVaryingPropensityGradient, JointTimeVaryingPropensityGradient, SeparableTimeVaryingPropensityGradient, propensitygrad, propensitygrad_timevarying
 
@@ -26,14 +26,17 @@ istimevarying(α::TimeVaryingPropensity) = true
 istimeseparable(α::SeparableTimeVaryingPropensity) = true
 
 function propensity(f::Any)
-    return StandardTimeInvariantPropensity(f)
+    m = methods(f)[1]
+    if m.nargs == 3
+        return StandardTimeInvariantPropensity(f)
+    elseif m.nargs == 4
+        return JointTimeVaryingPropensity(f)
+    else 
+        throw(ArgumentError("The callable passed to `propensity()` must have either two arguments (x,p) or three arguments (t,x,p)."))
+    end
 end
 
-function propensity_timevarying(f::Any)
-    return JointTimeVaryingPropensity(f)
-end
-
-function propensity_timevarying(xfactor::Any, tfactor::Any)
+function propensity(xfactor::Any, tfactor::Any)
     return SeparableTimeVaryingPropensity(tfactor, xfactor)
 end
 
@@ -41,13 +44,10 @@ end
 function (a::StandardTimeInvariantPropensity)(x::AbstractVector, p=[])
     a.f(x,p)
 end
-function (a::StandardTimeInvariantPropensity)(t::AbstractFloat, x::AbstractVector, p=[])
-    a.f(x,p)
-end
 function (a::JointTimeVaryingPropensity)(t::AbstractFloat, x::AbstractVector, p=[])
     a.f(t,x,p)
 end
-function (a::SeparableTimeVaryingPropensity)(t, x::AbstractVector, p=[])
+function (a::SeparableTimeVaryingPropensity)(t::AbstractFloat, x::AbstractVector, p=[])
     a.tfactor(t,p)*a.statefactor(x,p)
 end
 

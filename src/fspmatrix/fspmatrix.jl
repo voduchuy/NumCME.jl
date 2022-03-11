@@ -2,6 +2,6 @@ export FspMatrix, matvec, matvec!
 
 abstract type FspMatrix end
 
-include("fspsparsematrix/fspsparsematrix.jl")
+include("sparse/fspsparsematrix.jl")
 
 

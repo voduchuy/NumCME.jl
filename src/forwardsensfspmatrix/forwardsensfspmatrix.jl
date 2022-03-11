@@ -2,4 +2,4 @@ export SensFspMatrix
 
 abstract type ForwardSensFspMatrix end 
 
-include("forwardsensfspmatrixsparse/sensfspmatrixsparse.jl")
+include("./forwardsensfspmatrixsparse/sensfspmatrixsparse.jl")
