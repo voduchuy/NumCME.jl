@@ -39,7 +39,8 @@ function solve(model::CmeModelWithSensitivity,
     saveat = [],
     fsptol::AbstractFloat = 1.0E-6,
     odeatol::AbstractFloat = 1.0E-10,
-    odertol::AbstractFloat = 1.0E-4) where {NS, IntT<:Integer, RealT<:AbstractFloat}
+    odertol::AbstractFloat = 1.0E-4,
+    verbose::Bool=false) where {NS, IntT<:Integer, RealT<:AbstractFloat}
 
     tstart = min(tspan...)
     tend = max(tspan...)
@@ -95,9 +96,8 @@ function solve(model::CmeModelWithSensitivity,
         )
 
         fsensfspprob = DE.ODEProblem(sensfsprhs!, unow, (tnow, tend), p = get_parameters(model))
-        integrator = DE.init(fsensfspprob, sensfspalgorithm.ode_method, atol = odeatol, rtol = odertol, callback = fsp_cb, saveat = saveat)
-
-        DE.step!(integrator, tend - tnow, true)
+        integrator = DE.init(fsensfspprob, sensfspalgorithm.ode_method, atol = odeatol, rtol = odertol, callback = fsp_cb, saveat = saveat, progress=true)
+        DE.step!(integrator, tend - tnow, true)        
 
         for (t, u) in zip(integrator.sol.t, integrator.sol.u)
             push!(output.t, t)
@@ -109,7 +109,7 @@ function solve(model::CmeModelWithSensitivity,
 
         tnow = integrator.t
         # If the ODE integrator exits before reaching `tend`, it means the intermediate solution with current state space has reached error tolerance threshold
-        if tnow < tend
+        if tnow < tend            
             n = get_rowcount(SA.fspmatrix)
             p = integrator.u[1:n-sink_count]
             sinks = integrator.u[n-sink_count+1:n]
@@ -132,6 +132,9 @@ function solve(model::CmeModelWithSensitivity,
             for ip in 1:parameter_count
                 copyto!(unow, ip*n+1, S[ip], 1, length(S[ip]))
                 copyto!(unow, (ip+1)*n - sink_count + 1, dsinks[ip], 1, sink_count)
+            end
+            if verbose 
+                println("At t = $(round(tnow, digits=2)): update sate space. New size: $(get_state_count(statespace)) states.")
             end
         else # Otherwise, add the final slice to the output
             u = integrator.u            

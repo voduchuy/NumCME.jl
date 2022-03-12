@@ -1,8 +1,9 @@
 import DifferentialEquations as DE
 import Sundials
 using DifferentialEquations.DiffEqBase: ODEProblem, AbstractODEAlgorithm
-export FixedSparseFsp, AdaptiveFspSparse, solve
+import DifferentialEquations.DiffEqBase: solve
 
+export FixedSparseFsp, AdaptiveFspSparse, solve
 include("fspoutput.jl")
 include("spaceadapters.jl")
 
@@ -109,7 +110,8 @@ function solve(model::CmeModel,
     tspan::Tuple{AbstractFloat,AbstractFloat},
     fspalgorithm::AdaptiveFspSparse; saveat = [], fsptol::AbstractFloat = 1.0E-6,
     odeatol::AbstractFloat = 1.0E-10,
-    odertol::AbstractFloat = 1.0E-4) where {NS,IntT<:Integer,RealT<:AbstractFloat}
+    odertol::AbstractFloat = 1.0E-4,
+    verbose::Bool = false) where {NS,IntT<:Integer,RealT<:AbstractFloat}
 
     tstart = min(tspan...)
     tend = max(tspan...)
@@ -177,7 +179,11 @@ function solve(model::CmeModel,
             end
 
             # Extended solution vector to start the ODE integrator again            
-            unow = [p; sinks]                              
+            unow = [p; sinks]   
+            
+            if verbose 
+                println("t = $(round(tnow, 2)). Update state space. New size: $(get_state_count(statespace)).")
+            end
         else # Otherwise, add the final slice to the output
             u = integrator.u
             push!(output.t, tnow)
