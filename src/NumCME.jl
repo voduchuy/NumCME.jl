@@ -1,5 +1,5 @@
 module NumCME
-using Reexport, ReusePatterns, SparseArrays, StaticArrays, SparsityDetection, LinearAlgebra
+using ReusePatterns, SparseArrays, StaticArrays, SparsityDetection, LinearAlgebra
 import ForwardDiff
 
 include("cmemodel/cmemodel.jl")
