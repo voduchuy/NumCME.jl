@@ -4,9 +4,6 @@ using Test
 
 @testset "CME model" begin
     include("test_propensity.jl")    
-end
-
-@testset "Sensitivity model" begin 
     include("test_autodiff.jl")
 end
 
@@ -14,14 +11,12 @@ end
     include("test_statespace.jl")    
 end
 
-@testset "Fsp Matrix" begin 
-    include("test_fspmat.jl")
-end
-
 @testset "Transient CME" begin 
+    include("test_fspmat.jl")
     include("test_solver.jl")
 end
 
-@testset "ForwradSensFspMatrix" begin 
+@testset "Forward Sensitivity" begin 
     include("test_sensmat.jl")
+    include("test_sensfsp.jl")
 end
