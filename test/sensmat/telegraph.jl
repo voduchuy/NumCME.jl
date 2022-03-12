@@ -1,4 +1,4 @@
-using ChemicalMasterEquations
+using NumCME
 using Test
 using BenchmarkTools
 using SparseArrays

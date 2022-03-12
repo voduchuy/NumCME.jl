@@ -1,4 +1,4 @@
-using ChemicalMasterEquations
+using NumCME
 using Test
 
 TestFixture = NamedTuple{(:stoich_mat, :x0)}

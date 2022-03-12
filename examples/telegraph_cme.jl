@@ -1,4 +1,4 @@
-using ChemicalMasterEquations
+using NumCME
 using BenchmarkTools
 using Sundials: CVODE_BDF
 

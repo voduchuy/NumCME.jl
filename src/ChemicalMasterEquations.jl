@@ -1,4 +1,4 @@
-module ChemicalMasterEquations
+module NumCME
 using Reexport, ReusePatterns, SparseArrays, StaticArrays, SparsityDetection, LinearAlgebra
 import ForwardDiff
 

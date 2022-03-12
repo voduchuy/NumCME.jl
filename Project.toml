@@ -1,4 +1,4 @@
-name = "ChemicalMasterEquations"
+name = "NumCME"
 uuid = "1785c143-4357-4f1f-be49-5c4bc10f803a"
 authors = ["Huy D. Vo <vdhuy91@gmail.com> and contributors"]
 version = "0.1.0"

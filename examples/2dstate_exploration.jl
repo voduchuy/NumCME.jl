@@ -1,5 +1,5 @@
 using BenchmarkTools
-using ChemicalMasterEquations 
+using NumCME 
 
 
 function explore_states(state_type::Type{ST}, index_type::Type{T}) where {ST<:Integer, T<: Integer}

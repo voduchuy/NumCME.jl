@@ -1,4 +1,4 @@
-using ChemicalMasterEquations
+using NumCME
 using BenchmarkTools
 import DifferentialEquations as DE
 using Sundials: CVODE_BDF

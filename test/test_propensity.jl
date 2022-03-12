@@ -1,4 +1,4 @@
-using ChemicalMasterEquations
+using NumCME
 using Test 
 
 p1 = propensity((x,p) -> x[2])
