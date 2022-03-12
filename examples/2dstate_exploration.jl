@@ -1,5 +1,5 @@
 using BenchmarkTools
-using Julifsp 
+using ChemicalMasterEquations 
 
 
 function explore_states(state_type::Type{ST}, index_type::Type{T}) where {ST<:Integer, T<: Integer}

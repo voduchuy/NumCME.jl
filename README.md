@@ -1,4 +1,4 @@
-# Julifsp
+# ChemicalMasterEquations
 An extensible toolkit for [Finite State Projection](https://www.atmos.colostate.edu/~munsky/Papers/JChemPhys_124_044104.pdf) analysis of Stochastic Reaction Network models in Julia. 
 ## Features 
 This package aims to offer dynamic, fast, and customizable methods for direct numerical integration of the Chemical Master Equation (CME) in Julia. Currently, it has:

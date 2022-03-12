@@ -1,5 +1,5 @@
 using Test
-using Julifsp
+using ChemicalMasterEquations
 using LinearAlgebra
 using Sundials: CVODE_BDF
 

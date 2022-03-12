@@ -1,4 +1,4 @@
-using Julifsp
+using ChemicalMasterEquations
 using BenchmarkTools
 import DifferentialEquations as DE
 using Sundials: CVODE_BDF

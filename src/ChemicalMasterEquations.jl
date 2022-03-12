@@ -1,4 +1,4 @@
-module Julifsp
+module ChemicalMasterEquations
 using Reexport, ReusePatterns, SparseArrays, StaticArrays, SparsityDetection, LinearAlgebra
 import ForwardDiff
 

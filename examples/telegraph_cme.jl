@@ -1,4 +1,4 @@
-using Julifsp
+using ChemicalMasterEquations
 using BenchmarkTools
 using Sundials: CVODE_BDF
 

@@ -1,4 +1,4 @@
-using Julifsp
+using ChemicalMasterEquations
 using Test 
 
 p1 = propensity((x,p) -> x[2])
