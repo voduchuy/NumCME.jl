@@ -29,7 +29,7 @@ sensfspalgorithm = AdaptiveForwardSensFspSparse(
     ode_method = CVODE_BDF(linear_solver = :GMRES),
     space_adapter = ForwardSensRStepAdapter(10, 10, true)
 )
-@time senssol = solve(sensmodel,
+senssol = solve(sensmodel,
     init_cond,
     (0.0, 400.0),
     sensfspalgorithm;

@@ -55,7 +55,7 @@ end
 # Test correctness of auto-determined sparsity pattern of propensity gradients 
 correct_sparsity = sparse([1, 2, 3, 4, 4],[1, 2, 3, 4, 5],[true, true, true, true, true])
 sparsity_patterns = get_gradient_sparsity_patterns(sensmodel)
-@test correct_sparsity ≈ sparsity_patterns
+@test correct_sparsity == sparsity_patterns
 
 
 

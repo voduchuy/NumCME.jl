@@ -1,25 +1,31 @@
 export propensitygrad_sparsity_pattern
 
 function propensitygrad_sparsity_pattern(speciescount, parametercount, propensities, parameters)    
-    exprs = ""
-    for i in 1:length(propensities)
-        if istimevarying(propensities[i])
-            propensity_call = "y[$i] = propensities[$i](x[1], x[2:$speciescount+1], x[$speciescount+2:end])"                        
+    propensitycount = length(propensities)
+    @variables t, x[1:speciescount](t), alphas[1:propensitycount](t)
+    @parameters p[1:parametercount]
+    eqs = Vector{Equation}([])
+    for r in 1:propensitycount 
+        if istimevarying(propensities[r])
+            push!(eqs, alphas[r]~propensities[r](t, x, p))        
         else 
-            propensity_call = "y[$i] = propensities[$i](x[2:$speciescount+1], x[$speciescount+2:end])"                        
+            push!(eqs, alphas[r]~propensities[r](x, p))        
         end
-        exprs *= ";$propensity_call"
     end
-    exprs = exprs[2:end]
-    exprs = Meta.parse(exprs)
-    F = eval( quote
-        function prop(y, x, propensities)
-            $(exprs.args...)
+    @named sys = ODESystem(eqs,t,[x;alphas],p)
+    eqdep = equation_dependencies(sys; variables=[p...])
+    depgraph = asgraph(eqdep, Dict([s=>i for (i,s) in enumerate(p)]))
+
+    I = Vector{UInt32}()
+    J = Vector{UInt32}()
+    vals = Vector{Bool}() 
+    for r in 1:propensitycount 
+        for ip in depgraph.fadjlist[r]
+            push!(I, r)
+            push!(J, ip)
+            push!(vals, true)
         end
-        prop
-    end)
-    input = [[1.0]; ones(Int32, speciescount); parameters]
-    output = zeros(length(propensities))
-    sparsity_pattern = jacobian_sparsity(F, output, input, propensities, verbose=false)
-    return sparsity_pattern[:, speciescount+2:end]
+    end
+
+    return sparse(I,J,vals)
 end

@@ -12,6 +12,7 @@ end
 end
 
 @testset "Transient CME" begin 
+    include("test_fspvec.jl")
     include("test_fspmat.jl")
     include("test_solver.jl")
 end
