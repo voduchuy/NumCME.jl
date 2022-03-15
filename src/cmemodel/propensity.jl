@@ -44,10 +44,10 @@ end
 function (a::StandardTimeInvariantPropensity)(x::AbstractVector, p=[])
     a.f(x,p)
 end
-function (a::JointTimeVaryingPropensity)(t::AbstractFloat, x::AbstractVector, p=[])
+function (a::JointTimeVaryingPropensity)(t::Real, x::AbstractVector, p=[])
     a.f(t,x,p)
 end
-function (a::SeparableTimeVaryingPropensity)(t::AbstractFloat, x::AbstractVector, p=[])
+function (a::SeparableTimeVaryingPropensity)(t::Real, x::AbstractVector, p=[])
     a.tfactor(t,p)*a.statefactor(x,p)
 end
 

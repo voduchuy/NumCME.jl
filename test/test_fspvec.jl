@@ -12,3 +12,6 @@ v2 = sum(v, [2])
 @test sum(v) == 11.0
 @test nnz(v1) == 11
 @test nnz(v2) == 2
+
+@test_throws ArgumentError FspVectorSparse([@MVector([0, 1])], [1.0,2.0])
+@test_throws ArgumentError FspVectorSparse([@MVector([0,1]), @MVector([1,2])], [1.0])
