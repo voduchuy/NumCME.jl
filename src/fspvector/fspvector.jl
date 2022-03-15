@@ -1,6 +1,9 @@
-export AbstractFspVector, FspVectorSparse, sum, get_states, get_values, get_statedict 
+import SparseArrays: nnz
+
+export AbstractFspVector, FspVectorSparse, sum, get_states, get_values, get_statedict , nnz
 
 abstract type AbstractFspVector end
+
 
 """
     FspVectorSparse{NS, IntT<:Integer, RealT<:AbstractFloat} <: AbstractFspVector 
@@ -15,6 +18,7 @@ end
 get_states(v::FspVectorSparse) = v.states
 get_values(v::FspVectorSparse) = v.values
 get_statedict(v::FspVectorSparse) = v.state2idx
+nnz(p::FspVectorSparse) = length(get_states(p))
 
 """
     FspVectorSparse(states::Vector{MVector{NS, IntT}}, values::Vector{RealT})
@@ -73,10 +77,9 @@ function Base.sum(p::FspVectorSparse{NS,IntT,RealT}, dims::AbstractVector{<:Inte
     reduced_state2idx = Dict{MVector{reduced_species_count,IntT}, IntT}()
     reduced_vals = Vector{RealT}()
 
-    rvec_length = 0
-    reduced_state = MVector{reduced_species_count,IntT}(zeros(IntT, reduced_species_count))
+    rvec_length = 0    
     for (i, eachstate) in enumerate(full_states)
-        reduced_state .= eachstate[keepdims]
+        reduced_state = eachstate[keepdims]
         reduced_idx = get(reduced_state2idx, reduced_state, 0)
         if reduced_idx == 0
             rvec_length += 1
@@ -94,6 +97,7 @@ function Base.sum(p::FspVectorSparse{NS,IntT,RealT}, dims::AbstractVector{<:Inte
         state2idx = reduced_state2idx
     )
 end
+
 
 """
     Array(p::FspVectorSparse)
