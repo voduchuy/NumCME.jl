@@ -8,7 +8,7 @@ This package aims to offer dynamic, fast, and customizable methods for direct nu
 - Sensitivity analysis: Compute partial derivatives of the FSP solution with respect to model parameters. Users do not need to write analytic expressions of the propensity's partial derivatives. Instead, the package applies existing tools from [`ModelingToolkit.jl`](https://github.com/SciML/ModelingToolkit.jl) and [`ForwardDiff.jl`](https://github.com/JuliaDiff/ForwardDiff.jl) to generate those derivatives automatically.
 - Advanced users can write their own dynamic state space management policy by subtyping `SpaceAdapter`.
 ## Installation
-This package can be installed using Julia's package management. For the last stable version, 
+This package can be installed using Julia's package management. For the last stable version from the General Registry,
 ```julia
 import Pkg; Pkg.add("NumCME")
 ```
