@@ -182,7 +182,7 @@ function solve(model::CmeModel,
             unow = [p; sinks]   
             
             if verbose 
-                println("t = $(round(tnow, 2)). Update state space. New size: $(get_state_count(statespace)).")
+                println("t = $(round(tnow, digits=2)). Update state space. New size: $(get_state_count(statespace)).")
             end
         else # Otherwise, add the final slice to the output
             u = integrator.u
