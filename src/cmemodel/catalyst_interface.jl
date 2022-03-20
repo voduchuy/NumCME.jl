@@ -27,5 +27,15 @@ function CmeModel(rn::Catalyst.ReactionSystem, parameter_values)
         push!(converted_propensities, propensity(eval(b)))
     end
 
-    return CmeModel(𝔖, converted_propensities, parameter_values)
+    if typeof(parameter_values) <: AbstractVector{<:Real}
+        parvec = copy(parameter_values)
+    else
+        pmap = Catalyst.paramsmap(rn)
+        parvec = zeros(parameter_count)
+        for p in parameter_values 
+            parvec[ pmap[p[1]] ] = p[2]
+        end
+    end
+
+    return CmeModel(𝔖, converted_propensities, parvec)
 end
