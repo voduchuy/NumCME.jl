@@ -54,7 +54,7 @@ Instance of an ODE algorithm from the `DifferentialEquations.jl` package.
 Method to adapt the FSP state space when truncation error exceeds user-specified tolerance.
 
 # See also 
-`SparseSpaceAdapter`, `SparseMultIdxVector`, `CmeModel`
+[`SparseSpaceAdapter`](@ref), [`SparseMultIdxVector`](@ref), [`CmeModel`](@ref)
 """
 Base.@kwdef mutable struct AdaptiveFspSparse <: TransientCmeAlgorithm
     ode_method::Union{Nothing,AbstractODEAlgorithm}
@@ -68,7 +68,9 @@ tspan,
 fspalgorithm::AdaptiveFspSparse; 
 saveat = [], fsptol=1.0E-6,
 odeatol=1.0E-10,
-odertol=1.0E-4)`
+odertol=1.0E-4,
+verbose=false
+)`
 
 Numerical integration for the chemical master equation using an adaptive Finite State Projection (FSP) algorithm. This method is adaptive, meaning that states will be added during the course of integration to ensure the approximation error is below the user-specified tolerance. 
 In addition, depending on the input `fspalgorithm`, the space adapter may delete states with low probabilities before expanding the state space. This ensures not only accuracy but also efficiency of the CME integration.
@@ -99,11 +101,14 @@ Relative error tolerance for the ODE solver of the ODEs resulting from FSP trunc
     odeatol (optional)
 Relative error tolerance for the ODE solver of the ODEs resulting from FSP truncation. Default: 1.0E-10.
 
+    verbose (optional)
+Whether to output status when updating the state space. Default: false.
+
 # Returns 
 An instance of `FspOutputSparse`.
 
 # See also 
-`CmeModel`, `AdaptiveFspSparse`, `FspOutputSparse`.
+[`CmeModel`](@ref), [`AdaptiveFspSparse`](@ref), [`FspOutputSparse`](@ref).
 """
 function solve(model::CmeModel,
     initial_distribution::FspVectorSparse{NS,IntT,RealT},
