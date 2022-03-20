@@ -1,4 +1,5 @@
 module NumCME
+using DocStringExtensions
 using ReusePatterns, SparseArrays, StaticArrays, LinearAlgebra, ModelingToolkit
 import ForwardDiff
 

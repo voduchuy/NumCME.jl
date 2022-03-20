@@ -43,7 +43,7 @@ end
 """
     mutable struct AdaptiveFspSparse <: TransientCmeAlgorithm
 
-Struct to store adaptive Finite State Projection algorithmic options. This type is intended to work with `solve()` methods that output CME solutions as sparse vectors of type `SparseMultIdxVector`. 
+Struct to store adaptive Finite State Projection algorithmic options. This type is intended to work with `solve()` methods that output CME solutions as sparse vectors of type `FspVectorSparse`. 
 
 # Fields 
 
@@ -54,7 +54,7 @@ Instance of an ODE algorithm from the `DifferentialEquations.jl` package.
 Method to adapt the FSP state space when truncation error exceeds user-specified tolerance.
 
 # See also 
-[`SparseSpaceAdapter`](@ref), [`SparseMultIdxVector`](@ref), [`CmeModel`](@ref)
+[`RStepAdapter`](@ref), [`FspVectorSparse`](@ref), [`CmeModel`](@ref)
 """
 Base.@kwdef mutable struct AdaptiveFspSparse <: TransientCmeAlgorithm
     ode_method::Union{Nothing,AbstractODEAlgorithm}
@@ -62,15 +62,7 @@ Base.@kwdef mutable struct AdaptiveFspSparse <: TransientCmeAlgorithm
 end
 
 """
-`solve(model::CmeModel,
-initial_distribution::SparseMultIdxVector,
-tspan,
-fspalgorithm::AdaptiveFspSparse; 
-saveat = [], fsptol=1.0E-6,
-odeatol=1.0E-10,
-odertol=1.0E-4,
-verbose=false
-)`
+    $(TYPEDSIGNATURES)
 
 Numerical integration for the chemical master equation using an adaptive Finite State Projection (FSP) algorithm. This method is adaptive, meaning that states will be added during the course of integration to ensure the approximation error is below the user-specified tolerance. 
 In addition, depending on the input `fspalgorithm`, the space adapter may delete states with low probabilities before expanding the state space. This ensures not only accuracy but also efficiency of the CME integration.
@@ -80,14 +72,14 @@ In addition, depending on the input `fspalgorithm`, the space adapter may delete
     model::CmeModel
 Chemical Master Equation model.
 
-    initial_distribution::SparseMultIdxVector
+    initial_distribution::FspVectorSparse
 Initial distribution.
 
     tspan::Tuple{AbstractFloat, AbstractFloat}
 Timespan for the integration. The first element is the starting time, the second element is the end time of the integration.
 
     fspalgorithm::AdaptiveFspSparse
-An instance of `AdaptiveSparseFsp`, storing information about the specific adaptive FSP method.
+An instance of `AdaptiveFspSparse`, storing information about the specific adaptive FSP method.
 
     saveat::Vector{AbstractFloat} (optional)
 Time points to store the FSP solutions at. Default is `[]`, which means all solutions at every timestep will be stored.

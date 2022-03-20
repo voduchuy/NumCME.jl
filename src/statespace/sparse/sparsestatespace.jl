@@ -205,7 +205,7 @@ function expand!(statespace::StateSpaceSparse{NS,NR,IntT,SizeT}, expansionlevel:
 end
 
 """
-`is_all_positive_(x)`
+$(TYPEDSIGNATURES)
 
 Helper function. Returns `true` if all elements of a vector is positive. Otherwise returns `false`.
 """

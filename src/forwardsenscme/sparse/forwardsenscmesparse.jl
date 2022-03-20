@@ -1,20 +1,62 @@
 export AdaptiveForwardSensFspSparse, ForwardSensFspInitialConditionSparse
 export forwardsens_initial_condition, get_states, get_probability, get_sensitivity
 
+"""
+    $(TYPEDEF)
+
+Type to store algorithmic options for solving a Foward Sensitivity CME problem.
+
+# Fields 
+
+$(FIELDS)
+
+# See also 
+[`ForwardSensRStepAdapter`](@ref)
+"""
 Base.@kwdef struct AdaptiveForwardSensFspSparse <: ForwardSensCmeAlgorithm
+    """
+    Method to adapt state space when the current solution error exceeds tolerance.
+    """
     space_adapter::AbstractForwardSensSpaceAdapterSparse
+    """
+    An ODE solver from `DifferentialEquations.jl` to integrate the FSP-truncated problem.
+    """
     ode_method::Union{Nothing,AbstractODEAlgorithm}
 end
 
+"""
+    $(TYPEDEF)
+
+Initial condition for Foward Sensitivity FSP in sparse format. 
+
+# Fields 
+
+$(FIELDS)
+
+"""
 struct ForwardSensFspInitialConditionSparse{NS,IntT<:Integer,RealT<:AbstractFloat}
+    """
+    List of states with nonzero initial probabilities.
+    """
     states::Vector{MVector{NS,IntT}}
+    """
+    List of nonzero probabilities, with `p[i]` being the probability of state `states[i]`.
+    """
     p::Vector{RealT}
+    """
+    List of partial derivatives, with `S[j][i]` being the `j`-th partial derivative of `p[i]`. 
+    """
     S::Vector{Vector{RealT}}
 end
 get_states(ic::ForwardSensFspInitialConditionSparse) = ic.states
 get_probability(ic::ForwardSensFspInitialConditionSparse) = ic.p
 get_sensitivity(ic::ForwardSensFspInitialConditionSparse) = ic.S
 
+"""
+    $(TYPEDSIGNATURES)
+
+Return a `ForwardSensFspInitialConditionSparse` instance from a list of initial states `states`, initial probabilities `probabilities` and initial sensitivities `sensitivity`.   
+"""
 function forwardsens_initial_condition(states::Vector{<:AbstractVector{IntT}}, probabilities::Vector{RealT}, sensitivity::Vector{Vector{RealT}}) where {IntT<:Integer, RealT<:AbstractFloat}
     isempty(states) && throw(ArgumentError("Empty state list in input."))
     species_count = length(states[1])    
@@ -32,6 +74,28 @@ function forwardsens_initial_condition(states::Vector{<:AbstractVector{IntT}}, p
     )
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Foward sensitivity Finite State Projection to compute the time-dependent probability distributions of a stochastic reaction network along with their partial derivatives with respect to model parameters.
+
+# Arguments 
+- `model`: Stochastic reaction network model with propensity sensitivities.
+- `initial_condition`: Initial condition.
+- `tspan`: Time span. 
+- `sensfspalgorithm`: Forward Sesitivity FSP method, a combination of space adaptation strategy and the ODE method to integrate the FSP-truncated problem.
+- `saveat`: timepoints to save the intermediate solutions. If left empty, all timesteps computed by the ODE solver is saved.
+- `fsptol`: FSP error tolerance. The solver dynamically adapts the projection space so that the sum of probability mass in the truncated solution is above `1.0 - fsptol`. Default: 1.0E-6.
+- `odeatol`: Absolute tolerance for the ODE solver. Default: 1.0E-10.
+- `odertol`: Relative tolerance for the ODE solver. Default: 1.0E-4.
+- `verbose`: Whether to print status when adapting state space. Default: false.
+
+# Returns 
+A `ForwardSensFspOutputSparse` instance.
+
+# See also 
+[`FspVectorSparse`](@ref), [`ForwardSensFspOutputSparse`](@ref), [`AdaptiveForwardSensFspSparse`](@ref).
+"""
 function solve(model::CmeModelWithSensitivity,
     initial_condition::ForwardSensFspInitialConditionSparse{NS, IntT, RealT},
     tspan::Tuple{AbstractFloat,AbstractFloat},

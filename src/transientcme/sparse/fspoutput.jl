@@ -1,7 +1,7 @@
 export FspOutputSparse, FspOutputSliceSparse
 
 """
-    FspOutputSparse{NS,IntT<:Integer,RealT<:AbstractFloat}
+    $(TYPEDEF)
 
 Struct to store Finite State Projection outputs based on the sparse representation of the FSP solution.
 
@@ -14,8 +14,7 @@ Struct to store Finite State Projection outputs based on the sparse representati
 If `sol` is of type `FspOutputSparse`, `sol[i]` will return a slice, of type `FspOutputSliceSparse` of the solution set at the `i`-th index. 
 
 # See also 
-[`FspOutputSliceSparse`](@ref), [`length(::FspOutputSliceSparse`](@ref).
-
+[`FspOutputSliceSparse`](@ref), [`length(::FspOutputSparse)`](@ref).
 """
 Base.@kwdef struct FspOutputSparse{NS,IntT<:Integer,RealT<:AbstractFloat}
     t::Vector{RealT}
@@ -62,6 +61,11 @@ function Base.lastindex(fspoutput::FspOutputSparse)
     return lastindex(fspoutput.t)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return number of FSP solutions in the solution set.
+"""
 function Base.length(fspoutput::FspOutputSparse)
     return length(fspoutput.t)
 end
