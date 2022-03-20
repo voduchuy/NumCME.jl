@@ -1,14 +1,31 @@
 export PropensityGradient, TimeInvariantPropensityGradient, TimeVaryingPropensityGradient, statefactorgrad, tfactorgrad
 
+"""
+Base type for all propensity gradients.
+"""
 abstract type PropensityGradient end
 abstract type TimeInvariantPropensityGradient <: PropensityGradient end
 abstract type TimeVaryingPropensityGradient <: PropensityGradient end
 
+"""
+Store the partial derivatives of a `StandardTimeInvariantPropensity` instance. 
+
+# Fields 
+- `pardiffs`: Vector of callables, whose length is the number of model parameters. Each of these callables has syntax `pardiffs[i](x,p)::Real` where `x` is the state vector and `p` the parameter vector.
+"""
 struct StandardTimeInvariantPropensityGradient <: TimeInvariantPropensityGradient
     pardiffs::Vector{Any}
 end
 
+"""
+Store the partial derivatives of a `SeparableTimeVaryingPropensity` instance. 
 
+# Fields 
+- `tfactor`: Callable in the form `tfactor(t,p)` where `t` is time, `p` is parameter vector.
+- `statefactor`: Callable in the form `statefactor(x,p)` where `x` is CME state, `p` the parameter vector.
+- `tfactor_pardiffs`: Vector of callables. Each of these callables has syntax `tfactor_pardiffs[i](t,p)::Real` where `t` is time variable and `p` the parameter vector.
+- `statefactor_pardiffs`: Vector of callables, whose length is the number of model parameters. Each of these callables has syntax `statefactor_pardiffs[i](x,p)::Real` where `x` is the state vector and `p` the parameter vector.
+"""
 struct SeparableTimeVaryingPropensityGradient <: TimeVaryingPropensityGradient
     tfactor::Any
     statefactor::Any
@@ -16,6 +33,12 @@ struct SeparableTimeVaryingPropensityGradient <: TimeVaryingPropensityGradient
     statefactor_pardiffs::Vector{Any}
 end
 
+"""
+Store the partial derivatives of a `JointTimeVaryingPropensity` instance. 
+
+# Fields 
+- `pardiffs`: Vector of callables, whose length is the number of model parameters. Each of these callables has syntax `pardiffs[i](t,x,p)::Real` where `t` is time, `x` is the state vector and `p` the parameter vector.
+"""
 struct JointTimeVaryingPropensityGradient <: TimeVaryingPropensityGradient
     pardiffs::Vector{Any}
 end

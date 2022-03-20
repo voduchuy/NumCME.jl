@@ -1,3 +1,22 @@
+"""
+    ForwardSensFspOutputSparse{NS,IntT<:Integer,RealT<:AbstractFloat}
+
+Struct to store Forward Sensitivity Finite State Projection outputs based on the sparse representation of the FSP solution.
+
+# Fields 
+- `t`: Array of solution output times.
+- `p`: Array of `FspVectorSparse` instances. `p[i]` is the CME solution at time `t[i]`.
+- 'S': Array of arrays of `FspVectorSparse` instances. `S[j][i]` is the `j`-th partial derivative of `p[i]`. 
+- `sinks`: Probability mass accumulated at the sink states over time. `sinks[i]` is the vector of sink state probabilities at time `t[i]`.
+- `dsinks`: Partial derivatives of sink probabilties. `dsinks[j][i]` is the `j`-th partial derivative of `sinks[i]`.
+
+# Usage 
+If `sol` is of type `FspOutputSparse`, `sol[i]` will return a slice, of type `FspOutputSliceSparse` of the solution set at the `i`-th index. 
+
+# See also 
+[`ForwardSensFspOutputSliceSparse`](@ref).
+
+"""
 Base.@kwdef mutable struct ForwardSensFspOutputSparse{NS,IntT<:Integer,RealT<:AbstractFloat}
     t::Vector{RealT}
     p::Vector{FspVectorSparse{NS,IntT,RealT}}
@@ -6,6 +25,11 @@ Base.@kwdef mutable struct ForwardSensFspOutputSparse{NS,IntT<:Integer,RealT<:Ab
     dsinks::Vector{Vector{AbstractVector{RealT}}}
 end
 
+"""
+    ForwardSensFspOutputSliceSparse
+
+Struct to store the Forward Sensitivity FSP solution at a single time. Fields: `t`, `p`, `S`, `sinks`, `dsinks`.
+"""
 mutable struct ForwardSensFspOutputSliceSparse{NS,IntT<:Integer,RealT<:AbstractFloat}
     t::RealT
     p::FspVectorSparse{NS,IntT,RealT}

@@ -218,6 +218,12 @@ function matvec!(out, t, A::FspMatrixSparse, v)
 end
 
 export matvecadd!
+
+"""
+    matvecadd!(out, t, A::FspMatrixSparse, v)
+
+Perform the in-place update `out = out + A(t)*v`.
+"""
 function matvecadd!(out, t, A::FspMatrixSparse, v)
     if !(A.timeinvariant_matrix isa Nothing    )
         SArrays.mul!(out, A.timeinvariant_matrix, v, 1, 1)

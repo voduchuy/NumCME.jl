@@ -44,7 +44,7 @@ model = CmeModel(𝕊, [a1,a2,a3,a4], θ)
 ```
 
 ## See also 
-`CmeModelWithSensitivity`, `Propensity`, `StandardTimeInvariantPropensity`, `JointTimeVaryingPropensity`, `SeparableTimeVaryingPropensity`.
+[`CmeModelWithSensitivity`](@ref), [`Propensity`](@ref), [`StandardTimeInvariantPropensity`](@ref), [`JointTimeVaryingPropensity`](@ref), [`SeparableTimeVaryingPropensity`](@ref).
 """
 struct CmeModel{IntT<:Integer}
     stoich_matrix::Matrix{IntT}
@@ -52,11 +52,29 @@ struct CmeModel{IntT<:Integer}
     parameters::AbstractVector
 end
 # Accessors 
+"""
+Get the vector of model parameters.
+"""
 get_parameters(model::CmeModel) = model.parameters
+"""
+Get number of species.
+"""
 get_species_count(model::CmeModel) = size(model.stoich_matrix, 1)
+"""
+Get number of reactions.
+"""
 get_reaction_count(model::CmeModel) = size(model.stoich_matrix, 2)
+"""
+Get number of parameters.
+"""
 get_parameter_count(model::CmeModel) = length(model.parameters)
+"""
+Get net stoichiometry matrix.
+"""
 get_stoich_matrix(model::CmeModel) = model.stoich_matrix
+"""
+Get vector of propensities.
+"""
 get_propensities(model::CmeModel) = model.propensities
 
 # Pretty printing for CmeModel
@@ -75,7 +93,7 @@ end
 Stochastic reaction network model with information about gradient of the propensity functions with respect to parameters. 
 
 ## See also 
-`PropensityGradient`
+[`PropensityGradient`](@ref)
 """
 mutable struct CmeModelWithSensitivity{IntT<:Integer}
     cmemodel::CmeModel{IntT}
@@ -83,13 +101,37 @@ mutable struct CmeModelWithSensitivity{IntT<:Integer}
     propensity_gradients::Vector{<:PropensityGradient}
 end
 # Accessors 
+"""
+Get parameter vectors of a Chemical Master Equation model instance.
+"""
 get_parameters(model::CmeModelWithSensitivity) = get_parameters(model.cmemodel)
+"""
+Get the number of species (i.e., the length of the CME state vector).
+"""
 get_species_count(model::CmeModelWithSensitivity) = get_species_count(model.cmemodel)
+"""
+Get number of reactions in the model.
+"""
 get_reaction_count(model::CmeModelWithSensitivity) = get_reaction_count(model.cmemodel)
+"""
+Get number of parrameters.
+"""
 get_parameter_count(model::CmeModelWithSensitivity) = get_parameter_count(model.cmemodel)
+"""
+Get the net stoichiometry matrix.
+"""
 get_stoich_matrix(model::CmeModelWithSensitivity) = get_stoich_matrix(model.cmemodel)
+"""
+Get the vector of propensities.
+"""
 get_propensities(model::CmeModelWithSensitivity) = get_propensities(model.cmemodel)
+"""
+Get the sparse matrix representing dependency pattern of propensity functions of model parameters.
+"""
 get_gradient_sparsity_patterns(model::CmeModelWithSensitivity) = model.gradient_sparsity_patterns
+"""
+Get the propensity gradients.
+"""
 get_propensity_gradients(model::CmeModelWithSensitivity) = model.propensity_gradients
 
 

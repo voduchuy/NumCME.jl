@@ -100,7 +100,7 @@ Construct a basic FSP state space with stoichiometry matrix `stoich_mat` and ini
 
 # Examples
 
-```jldoctest
+```
 julia> S = [[1,0] [-1,0] [0,1] [0,-1]]
 2×4 Matrix{Int64}:
  1  -1  0   0
@@ -205,7 +205,7 @@ function expand!(statespace::StateSpaceSparse{NS,NR,IntT,SizeT}, expansionlevel:
 end
 
 """
-`is_all_positive_(x)`
+$(TYPEDSIGNATURES)
 
 Helper function. Returns `true` if all elements of a vector is positive. Otherwise returns `false`.
 """
