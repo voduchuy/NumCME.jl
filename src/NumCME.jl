@@ -1,6 +1,8 @@
 module NumCME
 using DocStringExtensions
-using ReusePatterns, SparseArrays, StaticArrays, LinearAlgebra, ModelingToolkit
+using ReusePatterns, SparseArrays, StaticArrays, LinearAlgebra, Symbolics
+import ModelingToolkit
+import Catalyst 
 import ForwardDiff
 
 include("cmemodel/cmemodel.jl")
