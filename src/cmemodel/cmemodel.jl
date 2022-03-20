@@ -170,3 +170,5 @@ function Base.show(io::IO, model::CmeModelWithSensitivity)
     Base.print_matrix(io, get_gradient_sparsity_patterns(model))
     nothing 
 end
+
+include("catalyst_interface.jl")

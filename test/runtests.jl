@@ -5,6 +5,7 @@ using Test
 @testset "CME model" begin
     include("test_propensity.jl")    
     include("test_autodiff.jl")
+    include("test_catalyst_interface.jl")
 end
 
 @testset "State Space" begin
