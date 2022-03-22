@@ -23,7 +23,7 @@ Base.@kwdef struct FspOutputSparse{NS,IntT<:Integer,RealT<:AbstractFloat}
 end
 
 """
-    FspOutputSliceSparse
+    $(TYPEDEF)
 
 Struct to store the FSP solution at a single time. Fields: `t`, `p`, `sinks`.
 """

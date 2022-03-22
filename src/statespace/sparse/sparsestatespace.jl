@@ -2,32 +2,19 @@ using DataStructures: Deque
 
 export AbstractStateSpaceSparse, StateSpaceSparse, expand!, deleteat!, get_state_count, get_sink_count, get_stoich_matrix, get_statedict, get_state_connectivity, get_sink_connectivity
 
+"""
+$(TYPEDEF)
+"""
 abstract type AbstractStateSpaceSparse{NS,NR,IntT<:Integer,SizeT<:Integer} <: AbstractStateSpace end
 
 """
-    StateSpaceSparse{NS,NR,IntT<:Integer,SizeT<:Integer} <: AbstractStateSpaceSparse{NS,NR,IntT,SizeT}
+    $(TYPEDEF)
 
 Basic Sparse FSP State space.
 
 # Fields 
 
-    stoich_matrix::Matrix{IntT}
-Stoichiometry matrix S = [s₁ ... sₘ] of size N x M where N is the number of species, M the number of the reactions.
-
-    sink_count::SizeT
-Number of sinks.
-
-    states::Vector{MVector{NS,IntT}}
-Array of CME states included in the subspace.
-
-    state2idx::Dict{MVector{NS,IntT},SizeT}
-Dictionary of states, containing pairs `(x=>i)` for (i,x) in enumerate(states). The implementation must ensure that each state in `states` is a key in `state2idx` and conversely every key in `state2idx` exists in `states`.
-
-    state_connectivity::Vector{MVector{NR,SizeT}}
-List of state connectivity information. `state_connectivity[i][k] = j` if xᵢ = xⱼ + sₖ, that is, `states[i] = states[j] + stoich_mat[:, k]`. If there is no existing state that can reach xᵢ via reaction k, the implementation must ensure that `state_connectivity[i][k] = 0`.
-
-    sink_connectivity::Vector{MVector{NR,SizeT}}
-Matrix to store reaction events by which the included states transit to outside of the projected state space.
+$(FIELDS)
 
 # See also 
 `expand!`,`deleteat!`
@@ -54,35 +41,35 @@ end
 
 # Getters 
 """
-`get_stoich_matrix(space::StateSpaceSparse)`
+$(TYPEDSIGNATURES)
 
 Return the stoichiometry matrix.
 """
 get_stoich_matrix(space::StateSpaceSparse) = space.stoich_matrix
 
 """
-`get_state_count(statespace::AbstractStateSpace)`
+$(TYPEDSIGNATURES)
 
 Return number of states.
 """
 get_state_count(statespace::StateSpaceSparse) = length(statespace.states)
 
 """
-`get_sink_count(statespace::AbstractStateSpace)`
+$(TYPEDSIGNATURES)
 
 Return number of sinks. 
 """
 get_sink_count(statespace::StateSpaceSparse) = statespace.sink_count
 
 """
-`get_states(statespace::AbstractStateSpaceSparse)`
+$(TYPEDSIGNATURES)
 
 Return list of states.
 """
 get_states(statespace::StateSpaceSparse) = statespace.states
 
 """
-`get_statedict(statespace::StateSpaceSparse)`
+$(TYPEDSIGNATURES)
 
 Return state dictionary.
 """
@@ -94,7 +81,7 @@ get_sink_connectivity(statespace::StateSpaceSparse) = statespace.sink_connectivi
 
 # Constructors 
 """
-`StateSpaceSparse(stoich_mat, states; index_type::Type{<:Integer}=UInt32)`
+$(TYPEDEF)
 
 Construct a basic FSP state space with stoichiometry matrix `stoich_mat` and initial list of states `initstates` with their integer entries being stored in type `IntT <: Integer`.
 
@@ -112,7 +99,6 @@ julia> S = [[1,0] [-1,0] [0,1] [0,-1]]
  [0, 10]
 julia> StateSpaceSparse(S, states)
 ```
-
 """
 function StateSpaceSparse(stoich_matrix::Matrix{IntT}, initstates::Vector; index_type::Type{SizeT} = UInt32) where {IntT<:Integer,SizeT<:Integer}
     species_count = size(stoich_matrix, 1)
@@ -159,6 +145,8 @@ end
 
 
 """
+$(TYPEDSIGNATURES)
+
 Expand the FSP state space to include all states that are reachable from the existing states in `r` or fewer reaction events, where `r == num_reachable_steps`. The optional keyword argument `index_type` allows for more customization on internal indexing representations.
 """
 function expand!(statespace::StateSpaceSparse{NS,NR,IntT,SizeT}, expansionlevel::Integer; onlyreactions = []) where {NS,NR,IntT<:Integer,SizeT<:Integer}
@@ -204,11 +192,7 @@ function expand!(statespace::StateSpaceSparse{NS,NR,IntT,SizeT}, expansionlevel:
     nothing
 end
 
-"""
-$(TYPEDSIGNATURES)
-
-Helper function. Returns `true` if all elements of a vector is positive. Otherwise returns `false`.
-"""
+# Helper function. Returns `true` if all elements of a vector is positive. Otherwise returns `false`.
 function _is_all_nonnegative(x::AbstractVector)::Bool
     for xi in x
         xi < 0 && return false
@@ -216,10 +200,10 @@ function _is_all_nonnegative(x::AbstractVector)::Bool
     true
 end
 
-"""
+#=
 Helper function to add a state vector `newstate` to the current state space `statespace`.
 If `newstate` is already included in `statespace`, this function will return without modifying any of the input arguments.
-"""
+=#
 function _addstates!(statespace::StateSpaceSparse{NS,NR,IntT,SizeT}, newstates::Vector{VT}) where {NS,NR,IntT<:Integer,VT<:Union{Vector{IntT},MVector{NS,IntT}},SizeT<:Integer}
     states = get_states(statespace)
     state2idx = get_statedict(statespace)
@@ -284,7 +268,7 @@ end
 import Base: deleteat!
 
 """
-    deleteat!(statespace::StateSpaceSparse, ids::Vector{T}) where {T<:Integer}
+    $(TYPEDSIGNATURES)
 
 Delete states with indices `ids` from the state space.
 """

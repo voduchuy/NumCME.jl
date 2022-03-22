@@ -10,7 +10,3 @@ Pages = ["transientcme.jl",
         ]
 ```
 
-```@docs
-AdaptiveFspSparse
-FspOutputSparse
-```

@@ -9,6 +9,9 @@ makedocs(sitename="NumCME documentation",
         format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),        
         pages = [
             "Home" => "index.md",
+            "Examples" => Any[
+                "examples/hog1p.md"
+            ],
             "API reference" => Any[
                 "api/models.md",
                 "api/propensities.md",

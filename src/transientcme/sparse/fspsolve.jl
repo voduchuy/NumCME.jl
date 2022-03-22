@@ -41,7 +41,7 @@ function solve(model::CmeModel,
 end
 
 """
-    mutable struct AdaptiveFspSparse <: TransientCmeAlgorithm
+   $(TYPEDEF)
 
 Struct to store adaptive Finite State Projection algorithmic options. This type is intended to work with `solve()` methods that output CME solutions as sparse vectors of type `FspVectorSparse`. 
 

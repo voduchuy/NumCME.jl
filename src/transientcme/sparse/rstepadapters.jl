@@ -2,6 +2,8 @@
 export RStepAdapter, SelectiveRStepAdapter
 
 """
+$(TYPEDEF)
+
 Simple adapter based on reachability. Whenever the current FSP solution error is found to exceed the acceptable tolerance, the adapter will expand the state space by exploring all states that could be reached from the current state space within a set number of reaction events.
 
 This adapter only works with `StateSpaceSparse`.
@@ -13,7 +15,7 @@ struct RStepAdapter <: AbstractSpaceAdapterSparse
 end
 
 """
-`init!(statespace::StateSpaceSparse, adapter::RStepAdapter, p::Vector{RealT}, t::RealT, fsptol::RealT) where {RealT <: AbstractFloat}`
+$(TYPEDSIGNATURES)
 
 Make the state space and solution vector ready for FSP integration.
 """
@@ -25,7 +27,7 @@ function init!(statespace::StateSpaceSparse, adapter::RStepAdapter, p::Vector{<:
 end
 
 """
-`adapt!(statespace::StateSpaceSparse, adapter::RStepAdapter, p::Vector{RealT}, sinks::Vector{RealT}, t::RealT, fsptol::RealT; integrator::Union{DEIntegrator, Nothing}=nothing) where {RealT <: AbstractFloat}`
+$(TYPEDSIGNATURES)
 
 Adapt the state space and probability vector based on current error recorded in the `sinks` vector.
 """
@@ -49,6 +51,8 @@ function adapt!(statespace::StateSpaceSparse, adapter::RStepAdapter, p::Vector{R
 end
 
 """
+$(TYPEDEF)
+
 Adapter based on reachability. This adapter only explore new states through reaction channels with positive derivatives. 
 
 This adapter only works with `StateSpaceSparse`.
@@ -60,6 +64,8 @@ struct SelectiveRStepAdapter <: AbstractSpaceAdapterSparse
 end
 
 """
+$(TYPEDSIGNATURES)
+
 `init!(statespace::StateSpaceSparse, adapter::SelectiveRStepAdapter, p::Vector{RealT}, t::RealT, fsptol::RealT) where {RealT <: AbstractFloat}`
 
 Make the state space and solution vector ready for FSP integration.
@@ -72,7 +78,7 @@ function init!(statespace::StateSpaceSparse, adapter::SelectiveRStepAdapter, p::
 end
 
 """
-`adapt!(statespace::StateSpaceSparse, adapter::SelectiveRStepAdapter, p::Vector{<:AbstractFloat}, sinks::Vector{<:AbstractFloat}, t::AbstractFloat, fsptol::AbstractFloat; integrator::Union{DEIntegrator, Nothing}=nothing)`
+$(TYPEDSIGNATURES)
 
 Adapt the state space and probability vector based on current error recorded in the `sinks` vector.
 """
