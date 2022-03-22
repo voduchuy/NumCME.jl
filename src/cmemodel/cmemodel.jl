@@ -53,26 +53,32 @@ struct CmeModel{IntT<:Integer}
 end
 # Accessors 
 """
+$(TYPEDSIGNATURES)
 Get the vector of model parameters.
 """
 get_parameters(model::CmeModel) = model.parameters
 """
+$(TYPEDSIGNATURES)
 Get number of species.
 """
 get_species_count(model::CmeModel) = size(model.stoich_matrix, 1)
 """
+$(TYPEDSIGNATURES)
 Get number of reactions.
 """
 get_reaction_count(model::CmeModel) = size(model.stoich_matrix, 2)
 """
+$(TYPEDSIGNATURES)
 Get number of parameters.
 """
 get_parameter_count(model::CmeModel) = length(model.parameters)
 """
+$(TYPEDSIGNATURES)
 Get net stoichiometry matrix.
 """
 get_stoich_matrix(model::CmeModel) = model.stoich_matrix
 """
+$(TYPEDSIGNATURES)
 Get vector of propensities.
 """
 get_propensities(model::CmeModel) = model.propensities
@@ -102,34 +108,42 @@ mutable struct CmeModelWithSensitivity{IntT<:Integer}
 end
 # Accessors 
 """
+$(TYPEDSIGNATURES)
 Get parameter vectors of a Chemical Master Equation model instance.
 """
 get_parameters(model::CmeModelWithSensitivity) = get_parameters(model.cmemodel)
 """
+$(TYPEDSIGNATURES)
 Get the number of species (i.e., the length of the CME state vector).
 """
 get_species_count(model::CmeModelWithSensitivity) = get_species_count(model.cmemodel)
 """
+$(TYPEDSIGNATURES)
 Get number of reactions in the model.
 """
 get_reaction_count(model::CmeModelWithSensitivity) = get_reaction_count(model.cmemodel)
 """
+$(TYPEDSIGNATURES)
 Get number of parrameters.
 """
 get_parameter_count(model::CmeModelWithSensitivity) = get_parameter_count(model.cmemodel)
 """
+$(TYPEDSIGNATURES)
 Get the net stoichiometry matrix.
 """
 get_stoich_matrix(model::CmeModelWithSensitivity) = get_stoich_matrix(model.cmemodel)
 """
+$(TYPEDSIGNATURES)
 Get the vector of propensities.
 """
 get_propensities(model::CmeModelWithSensitivity) = get_propensities(model.cmemodel)
 """
+$(TYPEDSIGNATURES)
 Get the sparse matrix representing dependency pattern of propensity functions of model parameters.
 """
 get_gradient_sparsity_patterns(model::CmeModelWithSensitivity) = model.gradient_sparsity_patterns
 """
+$(TYPEDSIGNATURES)
 Get the propensity gradients.
 """
 get_propensity_gradients(model::CmeModelWithSensitivity) = model.propensity_gradients

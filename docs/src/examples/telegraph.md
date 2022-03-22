@@ -12,7 +12,7 @@ using Sundials: CVODE_BDF
 using StaticArrays: @MVector
 ```
 
-## Two ways to define a stochastic reaction network model in Julia
+## Two ways to input a stochastic reaction network model
 `NumCME` supports inputing the stochastic reaction network model using Julia's standard library. If you decide to go this route, you need to first define the stoichiometry matrix, then the propensity functions, the parameter vector, and call [`CmeModel`](@ref) constructor to put these elements together into a single model object.
 ```julia
 # Bursting gene model definition using basic Julia
@@ -40,7 +40,7 @@ kr = 5.0
 model = CmeModel(𝕊, [a1, a2, a3, a4], θ)
 ```
 
-On the other hand, you can also define a model using Catalyst's [beautiful DSL](https://catalyst.sciml.ai/dev/tutorials/dsl/). The following code snippet defines a `Catalyst.ReactionSystem` object that represents the reactions and propensity functions of the telegraph model.
+On the other hand, you can also define a model using Catalyst's [DSL](https://catalyst.sciml.ai/dev/tutorials/dsl/). The following code snippet defines a `Catalyst.ReactionSystem` object that represents the reactions and propensity functions of the telegraph model.
 ```julia
 # Bursting model definition using Catalyst 
 @parameters k₀₁ k₁₀ λ γ

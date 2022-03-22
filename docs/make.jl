@@ -3,7 +3,7 @@ using Documenter, NumCME
 makedocs(sitename="𝕹𝖚𝖒ℂ𝕄𝔼",
         authors="Huy Vo",
         doctest=false,
-        clean=false,
+        clean=true,
         modules=[NumCME],        
         format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),        
         pages = [
@@ -23,3 +23,10 @@ makedocs(sitename="𝕹𝖚𝖒ℂ𝕄𝔼",
             ]
         ]
         )
+
+deploydocs(
+    repo = "https://github.com/voduchuy/NumCME.jl",
+    target = "build",
+    deps = Deps.pip("pygments", "mkdocs", "python-markdown-math"),
+    # ...
+)        

@@ -62,7 +62,7 @@ sol = solve(
     fsptol = 1.0e-6,
     odeatol = 1.0e-14,
     odertol = 1.0e-6,
-    verbose=true
+    verbose=false
 );
 pend = sol[end].p 
 # Simulate behavior after MAPK addition 

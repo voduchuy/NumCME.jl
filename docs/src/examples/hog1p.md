@@ -1,6 +1,25 @@
 # MAPK-activated transcription in yeast
 
-In this example, we solve a four-state, two-compartment, MAPK-activated gene expression model taken from a published work by Munsky et al.[^1].
+In this example, we solve a four-state, two-compartment, MAPK-activated gene expression model taken from a published work by Munsky et al.[^1]. The reaction system is
+
+![](./assets/hog1p_rn.png)
+
+Here, $G_0, G_1, G_2, G_3$ represent four activation states of the gene of interest. $RNA_{nuc}$ is the gene's transcriptional product in the nucleus and $RNA_{cyt}$ is the gene's transcript that has been relocated to the cytoplasm.
+The deactivation rate $k_{10}(t) := k_{10}^{\text{const}}$ is a constant when there is no Hog1p signal. When there is signal, the rate is time-dependent and is given by 
+
+```math
+k_{10}(t) = \max\left(0.0, k_{10}^{\text{const}} - a \operatorname{Hog1p}(t)\right)
+```
+where 
+```math
+\operatorname{Hog1p}(t)
+=
+A_{hog}
+\left(
+    \frac{u(t)}{1 + u(t)/M_{hog}}
+\right)^{\eta}
+```
+with $u(t) = (1 - e^{-r_1t})e^{-r_2t}$.
 
 First, let's import `NumCME` and other useful packages
 ```julia
@@ -24,13 +43,13 @@ function Hog1p(t)
 end
 ```
 
-We use `Catalyst.jl`'s [beautiful DSL](https://catalyst.sciml.ai/dev/tutorials/dsl/) to define the reactions and rates of the model. You can see that the code is almost self-explanatory.
+We use `Catalyst.jl`'s beautiful domain-specific language ([DSL](https://catalyst.sciml.ai/dev/tutorials/dsl/)) to define the reactions and rates of the model. You can see that the code is almost self-explanatory.
 
 ```julia
-@parameters k01, k10, a, k12, k21, k23, k32, λ0, λ1, λ2, λ3, ktrans, γnuc, γcyt
+@parameters k01, k10const, a, k12, k21, k23, k32, λ0, λ1, λ2, λ3, ktrans, γnuc, γcyt
 rn = @reaction_network begin 
     k01, G0 --> G1
-    max(0, k10 - a*Hog1p(t)), G1 --> G0 
+    max(0, k10const - a*Hog1p(t)), G1 --> G0 
     k12, G1 --> G2 
     k21, G2 --> G1 
     k23, G2 --> G3
@@ -42,15 +61,15 @@ rn = @reaction_network begin
     γnuc, RNAnuc --> ∅
     ktrans, RNAnuc --> RNAcyt 
     γcyt, RNAcyt --> ∅
-end k01 k10 a k12 k21 k23 k32 λ0 λ1 λ2 λ3 γnuc ktrans γcyt
+end k01 k10const a k12 k21 k23 k32 λ0 λ1 λ2 λ3 γnuc ktrans γcyt
 ```
 
-Let's define a dictionary for the parameter values. 
+Let's define a dictionary for the parameter values. We use parameters provided by the paper, which werre fitted to the STL1 gene transcription data.
 
 ```julia
 param_values = Dict([
 k01=> 2.6e-3,
-k10=> 1.9e01,
+k10const=> 1.9e01,
 a=> 0.0,
 k12=> 7.63e-3,
 k21=> 1.2e-2,
@@ -66,7 +85,7 @@ ktrans=> 2.6e-1,
 ])
 ```
 
-Note that, we are setting the value for parameter `a` to `0.0` since we want to simulate the long time behavior of the cell prior to MAPK activation. This is acomplished with the following code
+Note that we are setting the value for parameter `a` to `0.0` since we want to simulate the long time behavior of the cell prior to MAPK activation. This is acomplished with the following code
 
 ```julia
 # Simulate long-time behavior before MAPK signal 
