@@ -8,7 +8,3 @@ Pages = ["forwardsenscme.jl",
         "forwardsenscme/sparse/sensoutputsparse.jl"
         ]
 ```
-
-```@docs
-AdaptiveForwardSensFspSparse
-```

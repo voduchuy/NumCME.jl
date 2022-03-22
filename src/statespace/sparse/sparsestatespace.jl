@@ -137,6 +137,7 @@ julia> S = [[1,0] [-1,0] [0,1] [0,-1]]
  0   0  1  -1
  julia> x0 = [0,1]
 julia> StateSpaceSparse(S, states)
+````
 """
 function StateSpaceSparse(stoich_matrix::Matrix{IntT}, init_state::Vector{IntT}; index_type::Type{SizeT} = UInt32) where {IntT<:Integer,SizeT<:Integer}
     return StateSpaceSparse(stoich_matrix, [init_state])
@@ -147,7 +148,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Expand the FSP state space to include all states that are reachable from the existing states in `r` or fewer reaction events, where `r == num_reachable_steps`. The optional keyword argument `index_type` allows for more customization on internal indexing representations.
+Expand the FSP state space to include all states that are reachable from the existing states in `expansionlevel` or fewer reaction events. State exploration direction is restricted to only reaction channels within `onlyreactions` if this argument is non-empty.
 """
 function expand!(statespace::StateSpaceSparse{NS,NR,IntT,SizeT}, expansionlevel::Integer; onlyreactions = []) where {NS,NR,IntT<:Integer,SizeT<:Integer}
     if expansionlevel <= 0

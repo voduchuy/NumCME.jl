@@ -1,6 +1,6 @@
 # MAPK-activated transcription in yeast
 
-In this example, we solve a four-state, two-compartment, MAPK-activated gene expression model taken from a published work by Munsky et al.[1].
+In this example, we solve a four-state, two-compartment, MAPK-activated gene expression model taken from a published work by Munsky et al.[^1].
 
 First, let's import `NumCME` and other useful packages
 ```julia
@@ -24,7 +24,7 @@ function Hog1p(t)
 end
 ```
 
-We use `Catalyst.jl`'s beautiful DSL to define the reactions and rates of the model. You can see that the code is almost self-explanatory.
+We use `Catalyst.jl`'s [beautiful DSL](https://catalyst.sciml.ai/dev/tutorials/dsl/) to define the reactions and rates of the model. You can see that the code is almost self-explanatory.
 
 ```julia
 @parameters k01, k10, a, k12, k21, k23, k32, λ0, λ1, λ2, λ3, ktrans, γnuc, γcyt
@@ -139,4 +139,4 @@ gif(anim, "hog1p.gif", fps = 10)
 ![](./assets/hog1p.gif)
 
 ## References
-[1] B. Munsky, G. Li, Z. R. Fox, D. P. Shepherd, and G. Neuert, “Distribution shapes govern the discovery of predictive models for gene regulation,” PNAS, vol. 115, no. 29, pp. 7533–7538, Jul. 2018, doi: 10.1073/pnas.1804060115.
+[^1]: B. Munsky, G. Li, Z. R. Fox, D. P. Shepherd, and G. Neuert, “Distribution shapes govern the discovery of predictive models for gene regulation,” PNAS, vol. 115, no. 29, pp. 7533–7538, Jul. 2018, doi: 10.1073/pnas.1804060115.
