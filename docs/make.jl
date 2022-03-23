@@ -28,5 +28,6 @@ deploydocs(
     repo = "github.com/voduchuy/NumCME.jl.git",
     target = "build",
     deps = Deps.pip("pygments", "mkdocs", "python-markdown-math"),
+    devbranch = "main" 
     # ...
 )        
