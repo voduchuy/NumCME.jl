@@ -17,7 +17,7 @@ For the latest commit on this repository,
 import Pkg; Pkg.add("https://github.com/voduchuy/NumCME.jl")
 ```
 ## TODO
-- [ ] Tutorials.
+- [ ] Online docs.
 - [ ] Implement more state space adaptation policy:
     - [Sliding windows](https://bmcsystbiol.biomedcentral.com/articles/10.1186/1752-0509-4-42).
     - [SSA-driven state space](https://doi.org/10.1016/j.mbs.2015.08.010).
