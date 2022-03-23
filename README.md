@@ -6,7 +6,7 @@ This package aims to offer dynamic, fast, and customizable methods for direct nu
 - Dynamic state spaces: The truncated state space is adapted on-the-fly to remove redundant states with low probabilities and add more states to ensure the truncation error is within user-specified tolerance.
 - Customizable: Users can choose how the dynamic state space is managed (by specifying parameters for existing `SpaceAdapter` subtypes or write their own `SpaceAdapter`) and how the reduced ODEs are solved (by choosing one among the multitude options offered by [`DifferentialEquations.jl`](https://github.com/SciML/DifferentialEquations.jl)). Advanced users can write their own dynamic state space management policy by subtyping `SpaceAdapter`.
 - Sensitivity analysis: Compute partial derivatives of the FSP solution with respect to model parameters. Users do not need to write analytic expressions of the propensity's partial derivatives. Instead, the package applies existing tools from [`ModelingToolkit.jl`](https://github.com/SciML/ModelingToolkit.jl) and [`ForwardDiff.jl`](https://github.com/JuliaDiff/ForwardDiff.jl) to generate those derivatives automatically.
-- Interface to [`Catalyst.jl`](https://catalyst.sciml.ai/dev/) package to accept reaction systems defined using Catalyst DSL.
+- Accept reaction systems defined using [`Catalyst.jl`](https://catalyst.sciml.ai/dev/) DSL.
 ## Installation
 This package can be installed using Julia's package management. For the last stable version from the General Registry,
 ```julia
