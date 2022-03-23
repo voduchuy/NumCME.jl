@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>MAPK-activated transcription in yeast · 𝕹𝖚𝖒ℂ𝕄𝔼</title><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.039/juliamono-regular.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">𝕹𝖚𝖒ℂ𝕄𝔼</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../telegraph/">Telegraphic gene expression</a></li><li class="is-active"><a class="tocitem" href>MAPK-activated transcription in yeast</a><ul class="internal"><li><a class="tocitem" href="#References"><span>References</span></a></li></ul></li></ul></li><li><span class="tocitem">API reference</span><ul><li><a class="tocitem" href="../../api/models/">CME models</a></li><li><a class="tocitem" href="../../api/propensities/">Propensity functions</a></li><li><a class="tocitem" href="../../api/propensity_gradients/">Gradients of propensity functions</a></li><li><a class="tocitem" href="../../api/space/">Managing state space</a></li><li><a class="tocitem" href="../../api/vectors/">Representing the CME solution</a></li><li><a class="tocitem" href="../../api/cmesolve/">Transient solution of the CME</a></li><li><a class="tocitem" href="../../api/cmesenssolve/">Forward sensitivity analysis</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>MAPK-activated transcription in yeast</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>MAPK-activated transcription in yeast</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/voduchuy/NumCME.jl/blob/master/docs/src/examples/hog1p.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="MAPK-activated-transcription-in-yeast"><a class="docs-heading-anchor" href="#MAPK-activated-transcription-in-yeast">MAPK-activated transcription in yeast</a><a id="MAPK-activated-transcription-in-yeast-1"></a><a class="docs-heading-anchor-permalink" href="#MAPK-activated-transcription-in-yeast" title="Permalink"></a></h1><p>In this example, we solve a four-state, two-compartment, MAPK-activated gene expression model taken from a published work by Munsky et al.<sup class="footnote-reference"><a id="citeref-1" href="#footnote-1">[1]</a></sup>. The reaction system is</p><p><img src="../assets/hog1p_rn.png" alt/></p><p>Here, <span>$G_0, G_1, G_2, G_3$</span> represent four activation states of the gene of interest. <span>$RNA_{nuc}$</span> is the gene&#39;s transcriptional product in the nucleus and <span>$RNA_{cyt}$</span> is the gene&#39;s transcript that has been relocated to the cytoplasm. The deactivation rate <span>$k_{10}(t) := k_{10}^{\text{const}}$</span> is a constant when there is no Hog1p signal. When there is signal, the rate is time-dependent and is given by </p><p class="math-container">\[k_{10}(t) = \max\left(0.0, k_{10}^{\text{const}} - a \operatorname{Hog1p}(t)\right)\]</p><p>where </p><p class="math-container">\[\operatorname{Hog1p}(t)
+=
+A_{hog}
+\left(
+    \frac{u(t)}{1 + u(t)/M_{hog}}
+\right)^{\eta}\]</p><p>with <span>$u(t) = (1 - e^{-r_1t})e^{-r_2t}$</span>.</p><p>First, let&#39;s import <code>NumCME</code> and other useful packages</p><pre><code class="language-julia hljs">using NumCME 
+using Catalyst
+using StaticArrays: @MVector
+using Sundials: CVODE_BDF</code></pre><p>Now, we will code up the time-varying Hog1p signal. Here, we use the parameters provided by the paper.</p><pre><code class="language-julia hljs">const r1 = 6.1e-3
+const r2 = 6.9e-3
+const η = 5.9
+const Ahog = 9.3e9
+const Mhog = 2.2e-2
+function Hog1p(t)
+    u = (1.0 - exp(-r1 * t)) * exp(-r2 * t)
+    signal = Ahog * (u / (1.0 + u / Mhog))^η
+    return signal 
+end</code></pre><p>We use <code>Catalyst.jl</code>&#39;s beautiful domain-specific language (<a href="https://catalyst.sciml.ai/dev/tutorials/dsl/">DSL</a>) to define the reactions and rates of the model. You can see that the code is almost self-explanatory.</p><pre><code class="language-julia hljs">@parameters k01, k10const, a, k12, k21, k23, k32, λ0, λ1, λ2, λ3, ktrans, γnuc, γcyt
+rn = @reaction_network begin 
+    k01, G0 --&gt; G1
+    max(0, k10const - a*Hog1p(t)), G1 --&gt; G0 
+    k12, G1 --&gt; G2 
+    k21, G2 --&gt; G1 
+    k23, G2 --&gt; G3
+    k32, G3 --&gt; G2
+    λ0, G0 --&gt; G0 + RNAnuc 
+    λ1, G1 --&gt; G1 + RNAnuc
+    λ2, G2 --&gt; G2 + RNAnuc 
+    λ3, G3 --&gt; G3 + RNAnuc 
+    γnuc, RNAnuc --&gt; ∅
+    ktrans, RNAnuc --&gt; RNAcyt 
+    γcyt, RNAcyt --&gt; ∅
+end k01 k10const a k12 k21 k23 k32 λ0 λ1 λ2 λ3 γnuc ktrans γcyt</code></pre><p>Let&#39;s define a dictionary for the parameter values. We use parameters provided by the paper, which werre fitted to the STL1 gene transcription data.</p><pre><code class="language-julia hljs">param_values = Dict([
+k01=&gt; 2.6e-3,
+k10const=&gt; 1.9e01,
+a=&gt; 0.0,
+k12=&gt; 7.63e-3,
+k21=&gt; 1.2e-2,
+k23=&gt; 4e-3,
+k32=&gt; 3.1e-3,
+λ0=&gt; 5.9e-4,
+λ1=&gt; 1.7e-1,
+λ2=&gt; 1.0,
+λ3=&gt; 3e-2,
+ktrans=&gt; 2.6e-1,
+γnuc=&gt; 2.2e-6,
+γcyt=&gt; 8.3e-3
+])</code></pre><p>Note that we are setting the value for parameter <code>a</code> to <code>0.0</code> since we want to simulate the long time behavior of the cell prior to MAPK activation. This is acomplished with the following code</p><pre><code class="language-julia hljs"># Simulate long-time behavior before MAPK signal 
+model = CmeModel(rn, collect(param_values))
+p0 = FspVectorSparse([@MVector [1,0,0,0,0,0]], [1.0])
+fsp = AdaptiveFspSparse(
+    ode_method = CVODE_BDF(linear_solver=:GMRES),
+    space_adapter = RStepAdapter(10,20,true)
+)
+sol = solve(
+    model, 
+    p0,
+    (0.0, 8*3600.0),
+    fsp;
+    saveat = [8*3600.0],
+    fsptol = 1.0e-6,
+    odeatol = 1.0e-14,
+    odertol = 1.0e-6,
+    verbose=true
+);
+pend = sol[end].p</code></pre><p>The last line extracts the probability distribution at the final solution time of the FSP run. We are using a sparse representation so <code>pend</code>&#39;s type would be <a href="../../api/vectors/#NumCME.FspVectorSparse"><code>FspVectorSparse</code></a>.</p><p>Now, we are ready to simulate the transient behavior of the cell under osmotic shock. With Hog1p entering the cell, the gene deactivation rate will be modulated by a non-trivial amount. So we adjust the value of parameter <code>a</code> using the value provided in the paper, then make a new <code>CmeModel</code> object with the updated parameter values dictionary.</p><pre><code class="language-julia hljs">param_values[a] = 3.2e04
+model = CmeModel(rn, collect(param_values))</code></pre><p>Now, let&#39;s solve the CME again with the addition of Hog1p signal. We are interested in the solution up to one hour (3600 second) after signal addition, and save intermediate solutions every minute.</p><pre><code class="language-julia hljs">sol = solve(
+    model, 
+    pend,
+    (0.0, 3600.0), 
+    fsp;
+    saveat = [t for t in 0.0:60.0:3600.0],
+    fsptol = 1.0e-4,
+    odeatol = 1.0e-14,
+    odertol = 1.0e-6,
+    verbose=true
+);</code></pre><p>Now, we are ready to make some animation.</p><pre><code class="language-julia hljs">using Plots 
+
+anim = @animate for i ∈ 1:length(sol)
+    pfull = sol[i].p 
+    pnuc = sum(pfull, [1,2,3,4,6]) |&gt; Array 
+    pcyt = sum(pfull, [1,2,3,4,5]) |&gt; Array 
+    rnaplot = plot()
+    plot!(rnaplot, 0:length(pnuc)-1, pnuc, color=:blue, label=&quot;Nuclear mRNA&quot;)
+    plot!(rnaplot, 0:length(pcyt)-1, pcyt, color=:red, label=&quot;Cytoplasmic mRNA&quot;)
+    ylims!(rnaplot, (0.0, 1.0))
+    xlims!(rnaplot, (0, 20))
+    xlabel!(rnaplot, &quot;Molecule count&quot;)
+    ylabel!(rnaplot,&quot;Probability&quot;)
+    title!(rnaplot, &quot;t = $(sol.t[i]/60.0) minute&quot;)
+end
+gif(anim, &quot;hog1p.gif&quot;, fps = 10)</code></pre><p><img src="../assets/hog1p.gif" alt/></p><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>B. Munsky, G. Li, Z. R. Fox, D. P. Shepherd, and G. Neuert, “Distribution shapes govern the discovery of predictive models for gene regulation,” PNAS, vol. 115, no. 29, pp. 7533–7538, Jul. 2018, doi: 10.1073/pnas.1804060115.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../telegraph/">« Telegraphic gene expression</a><a class="docs-footer-nextpage" href="../../api/models/">CME models »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.15 on <span class="colophon-date" title="Wednesday 23 March 2022 19:53">Wednesday 23 March 2022</span>. Using Julia version 1.6.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
