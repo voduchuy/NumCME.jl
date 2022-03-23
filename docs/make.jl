@@ -25,7 +25,7 @@ makedocs(sitename="𝕹𝖚𝖒ℂ𝕄𝔼",
         )
 
 deploydocs(
-    repo = "https://github.com/voduchuy/NumCME.jl.git",
+    repo = "github.com/voduchuy/NumCME.jl.git",
     target = "build",
     deps = Deps.pip("pygments", "mkdocs", "python-markdown-math"),
     # ...
