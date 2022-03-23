@@ -1,7 +1,7 @@
 using Documenter, NumCME 
 
 makedocs(sitename="𝕹𝖚𝖒ℂ𝕄𝔼",
-        authors="Huy D. Vo",
+        authors="Huy Vo",
         doctest=false,
         clean=true,
         modules=[NumCME],        
