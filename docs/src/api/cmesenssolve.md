@@ -1,14 +1,27 @@
 # Forward sensitivity analysis
-
+## Forward Sensitivity FSP variant specification
+```@docs 
+AdaptiveForwardSensFspSparse
+```
+## State space adaptation policy
 ```@autodocs
 Modules = [NumCME]
-Pages = ["forwardsenscme.jl",
-        "forwardsenscme/sparse/forwardsenscmesparse.jl",
-        "forwardsenscme/sparse/fsspaceadapterssparse.jl",
-        "forwardsenscme/sparse/sensoutputsparse.jl"
-        ]
+Pages = [
+    "forwardsenscme/sparse/fsspaceadapterssparse.jl"
+]
 ```
-
-```@docs
-AdaptiveForwardSensFspSparse
+## Forward sensitivity FSP output format
+```@autodocs
+Modules = [NumCME]
+Pages = [
+    "forwardsenscme/sparse/sensoutputsparse.jl"
+]
+```
+## `solve()` method
+```@autodocs
+Modules = [NumCME]
+Pages = ["forwardsenscme.jl",                
+        "forwardsenscme/sparse/forwardsenscmesparse.jl"
+        ]
+solve 
 ```

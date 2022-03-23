@@ -1,15 +1,15 @@
 using Documenter, NumCME 
 
-makedocs(sitename="NumCME documentation",
+makedocs(sitename="𝕹𝖚𝖒ℂ𝕄𝔼",
         authors="Huy Vo",
         doctest=false,
-        clean=false,
-        modules=[NumCME],
-        public=true,
+        clean=true,
+        modules=[NumCME],        
         format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),        
         pages = [
             "Home" => "index.md",
             "Examples" => Any[
+                "examples/telegraph.md",
                 "examples/hog1p.md"
             ],
             "API reference" => Any[
@@ -23,3 +23,10 @@ makedocs(sitename="NumCME documentation",
             ]
         ]
         )
+
+deploydocs(
+    repo = "https://github.com/voduchuy/NumCME.jl",
+    target = "build",
+    deps = Deps.pip("pygments", "mkdocs", "python-markdown-math"),
+    # ...
+)        
