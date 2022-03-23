@@ -1,9 +1,24 @@
-# ...
-markdown_extensions:
-  - mdx_math
-  # ...
+site_name:     NumCME.jl
+repo_url: https://github.com/voduchuy/NumCME.jl
+site_description: Direct solution of the chemical master equation in Julia
+site_author: Huy Vo
+
+theme: readthedocs
+
+extra_css:
+  - assets/Documenter.css
 
 extra_javascript:
   - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML
   - assets/mathjaxhelper.js
-# ...
+
+markdown_extensions:
+  - extra
+  - tables
+  - fenced_code
+  - mdx_math
+
+docs_dir: 'build'
+
+pages:
+  - Home: index.md

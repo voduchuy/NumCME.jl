@@ -26,6 +26,4 @@ import Pkg; Pkg.add("https://github.com/voduchuy/NumCME.jl")
 - [ ] Implement [methods](https://doi.org/10.1063/1.4994917) based on Tensor-train approximations.
 - [ ] [Stationary FSP](https://pubmed.ncbi.nlm.nih.gov/29055349/).
 - [ ] User-friendly support for computing the [Fisher Information Matrix](https://doi.org/10.1371/journal.pcbi.1006365) and optimal experiment design.
-## Other CME packages
-The following packages are not written by Huy Vo but students and researchers interested in direct solution of the CME can additionally look at:
-- [`FiniteStateProjection.jl`](https://github.com/kaandocal/FiniteStateProjection.jl) written by Kaan Öcal offers methods to convert a `Catalyst.jl` reaction network into a `ModelingToolkitize`'d FSP system (on a hyper-rectangular truncated state space) that can be solved using `DifferentialEquations.jl`. The package also automatically detects subnetworks with mass conservation (e.g. `A <->B` reactions) to reduce state dimension.
+

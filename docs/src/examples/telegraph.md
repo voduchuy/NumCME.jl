@@ -95,7 +95,7 @@ julia> @btime solve(model_from_catalyst, p0, tspan, fspalgorithm);
 ```
 
 ## Remarks
-- Specifying three species does _not_ increase the number of states included in the FSP compared to formulating it as a two-species system (with gene ∈ {ON, OFF} and RNA ∈ {0,1,2,...} ). This is because only states that satisfy `G0 + G1 == 1` are reachable from the initial condition and `NumCME`'s state space management, which is based on a reachability analysis of the CME state space, respects this constraint automatically. This is a feature of the "N-step reachability" state space exploration shceme introduced in the very first FSP paper by Munsky and Khammash [^1].
+- Specifying three species does _not_ increase the number of states included in the FSP compared to formulating it as a two-species system (with gene ∈ {ON, OFF} and RNA ∈ {0,1,2,...} ). This is because only states that satisfy `Goff + Gon == 1` are reachable from the initial condition and `NumCME`'s state space management, which is based on a reachability analysis of the CME state space, respects this constraint automatically. This is a feature of the "N-step reachability" state space exploration shceme introduced in the very first FSP paper by Munsky and Khammash [^1].
 - Thus, the estimate that the number of states increases as $O(n^d)$, while a useful heuristics, can be pessimistic for reaction networks with mass conservation.
 
 ## References
