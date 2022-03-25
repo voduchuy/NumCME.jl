@@ -27,4 +27,3 @@ import Pkg; Pkg.add("https://github.com/voduchuy/NumCME.jl")
 - [ ] [Stationary FSP](https://pubmed.ncbi.nlm.nih.gov/29055349/).
 - [ ] User-friendly support for computing the [Fisher Information Matrix](https://doi.org/10.1371/journal.pcbi.1006365) and optimal experiment design.
 
-
