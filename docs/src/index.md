@@ -16,3 +16,5 @@ For the latest commit on this repository,
 ```julia
 import Pkg; Pkg.add("https://github.com/voduchuy/NumCME.jl")
 ```
+## Acknowledgement
+Thanks to [Kaan Öcal](https://github.com/kaandocal) for the helpful conversation during [UQ-Bio 2021](https://q-bio.org/wp/qbss/) about Julia and Catalyst.
