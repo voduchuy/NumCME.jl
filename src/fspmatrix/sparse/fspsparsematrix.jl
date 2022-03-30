@@ -6,7 +6,7 @@ export FspMatrixSparse, get_parameters, get_states, get_rowcount, get_colcount, 
 """
 The transition rate matrix of the finite Markov chain approximation to the CME (including sink states). This type is based on the sparse representation of the truncated state space.
 """
-Base.@kwdef mutable struct FspMatrixSparse{NS,NR,IntT<:Integer,RealT<:AbstractFloat} <: FspMatrix
+Base.@kwdef mutable struct FspMatrixSparse{NS,NR,IntT<:Integer,RealT<:AbstractFloat} <: AbstractFspMatrix
     parameters::Vector{Any}
     states::Vector{MVector{NS,IntT}}
 
@@ -185,7 +185,9 @@ function size(A::FspMatrixSparse, dim::Integer)
     return (dim == 1) ? A.rowcount : A.colcount
 end
 
-# Matrix-vector multiplications
+#= 
+Matrix-vector multiplications
+=#
 """
 matvec!(out::Vector{RealT}, t::AbstractFloat, A::FspMatrixSparse, v::Vector{RealT})
 
@@ -195,12 +197,10 @@ function matvec!(out, t, A::FspMatrixSparse, v)
     if A.timeinvariant_matrix isa Nothing
         out .= 0.0
     else        
-        # out .= A.timeinvariant_matrix*v
         SArrays.mul!(out, A.timeinvariant_matrix, v)
     end
     θ = A.parameters
     for (i, r) in enumerate(A.separabletv_propensity_ids)
-        # out .+= A.propensities[r].tfactor(t, θ...)*A.separabletv_factormatrices[i]*v
         SArrays.mul!(out, A.separabletv_factormatrices[i], v, A.propensities[r].tfactor(t, θ), 1)        
     end    
     needupdate = false
@@ -211,7 +211,6 @@ function matvec!(out, t, A::FspMatrixSparse, v)
     for (i, r) in enumerate(A.jointtv_propensity_ids)
         (needupdate) && _update_sparsematrix!(A.jointtv_matrices[i], A.states, A.propensities[r],
             t, θ)
-        # out .+= A.jointtv_matrices[i]*v 
         SArrays.mul!(out, A.jointtv_matrices[i], v, 1.0, 1.0)                        
     end
     return nothing
@@ -263,13 +262,13 @@ function (A::FspMatrixSparse)(t::AbstractFloat)
 end
 
 import Base: *
-function *(A_at_t::Tuple{AbstractFloat,FspMatrixSparse}, v::Vector{RealT}) where {RealT<:AbstractFloat}
-    t = A_at_t[1]
-    A = A_at_t[2]
-    return matvec(t, A, v)
-end
 
 function *(A::FspMatrixSparse, v::Vector{RealT}) where {RealT<:AbstractFloat}
     return matvec(0.0, A, v)
 end
 
+#=
+Interface to DifferentialEquations.jl's Linear operator 
+=#
+# mutable struct FspDiffEqOperator <: AbstractDiffEqOperator
+# end
