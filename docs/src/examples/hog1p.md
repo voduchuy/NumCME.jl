@@ -159,3 +159,4 @@ gif(anim, "hog1p.gif", fps = 10)
 
 ## References
 [^1]: B. Munsky, G. Li, Z. R. Fox, D. P. Shepherd, and G. Neuert, “Distribution shapes govern the discovery of predictive models for gene regulation,” PNAS, vol. 115, no. 29, pp. 7533–7538, Jul. 2018, doi: 10.1073/pnas.1804060115.
+
