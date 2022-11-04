@@ -50,7 +50,7 @@ expand!(test_space, 100)
 pass = true 
 for t in test_times 
     for state in get_states(test_space)
-        pass &= cmemodel1.propensities[1](state,θ) ≈ cmemodel2.propensities[1](state,θ)
+        global pass &= cmemodel1.propensities[1](state,θ) ≈ cmemodel2.propensities[1](state,θ)
         pass &= cmemodel1.propensities[2](state,θ) ≈ cmemodel2.propensities[2](state,θ)
         pass &= cmemodel1.propensities[3](state,θ) ≈ cmemodel2.propensities[3](state,θ)
         pass &= cmemodel1.propensities[4](t,state,θ) ≈ cmemodel2.propensities[4](t,state,θ)
