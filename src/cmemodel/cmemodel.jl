@@ -174,7 +174,7 @@ end
 
 Construct a CME model with sensitivity information using a net stoichiometry matrix `stoich_matrix` and propensity functions `propensities` and parameters `parameters`. The partial derivatives of the propensity functions with respect to parameters are automatically derived using automatic differentiation.
 """
-CmeModelWithSensitivity(stoich_matrix, propensities::Vector{<:Propensity}, parameters::AbstractVector) where {PT <: Propensity} = CmeModelWithSensitivity(CmeModel(stoich_matrix, propensities, parameters))
+CmeModelWithSensitivity(stoich_matrix, propensities::Vector{<:Propensity}, parameters::AbstractVector) = CmeModelWithSensitivity(CmeModel(stoich_matrix, propensities, parameters))
 
 # Pretty printing for CmeModelWithSensitivity
 using Printf 

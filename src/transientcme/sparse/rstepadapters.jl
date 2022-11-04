@@ -98,7 +98,8 @@ function adapt!(statespace::StateSpaceSparse, adapter::SelectiveRStepAdapter,
     end
     sink_count = get_sink_count(statespace)
     du = similar(integrator.u)
-    integrator.f(du, integrator.u, [], t)
+    f! = integrator.f
+    f!(du, integrator.u, [], t)
     dsinks = du[end-sink_count+1:end]
     expandreactions = findall(dsinks .> 0)
     nold = get_state_count(statespace)

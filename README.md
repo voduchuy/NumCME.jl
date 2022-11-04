@@ -1,4 +1,6 @@
 # NumCME.jl
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://voduchuy.github.io/NumCME.jl/dev/)
+
 An extensible toolkit for direct numerical solution of the Chemical Master Equation based on the [Finite State Projection](https://www.atmos.colostate.edu/~munsky/Papers/JChemPhys_124_044104.pdf) and related algorithms.
 ## Features 
 This package aims to offer dynamic, fast, and customizable methods for direct numerical integration of the Chemical Master Equation (CME) in Julia. Currently, it has:
@@ -16,13 +18,12 @@ For the latest commit on this repository,
 ```julia
 import Pkg; Pkg.add("https://github.com/voduchuy/NumCME.jl")
 ```
-## TODO
-- [ ] Online docs.
+## Possible improvements
 - [ ] Implement more state space adaptation policy:
     - [Sliding windows](https://bmcsystbiol.biomedcentral.com/articles/10.1186/1752-0509-4-42).
     - [SSA-driven state space](https://doi.org/10.1016/j.mbs.2015.08.010).
     - [Multi-finite buffer](http://gila.bioe.uic.edu/lab/papers/2016/ACME-CaoTerebusLiang-2016.pdf).
-- [ ] Implement [methods](https://doi.org/10.1063/1.4994917) based on Tensor-train approximations.
+- [ ] Implement additional [methods](https://doi.org/10.1063/1.4994917) based on Tensor-train approximations.
 - [ ] [Stationary FSP](https://pubmed.ncbi.nlm.nih.gov/29055349/).
 - [ ] User-friendly support for computing the [Fisher Information Matrix](https://doi.org/10.1371/journal.pcbi.1006365) and optimal experiment design.
 

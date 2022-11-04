@@ -19,7 +19,7 @@ Sundials = "c3572dad-4567-51f8-b174-8c6c989267f4"
 Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 
 [compat]
-Catalyst = "10"
+Catalyst = "10, 11, 12"
 DataStructures = "0.18, 0.19"
 DifferentialEquations = "7"
 DocStringExtensions = "0.8"

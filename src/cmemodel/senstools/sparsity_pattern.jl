@@ -2,7 +2,7 @@ export propensitygrad_sparsity_pattern
 
 function propensitygrad_sparsity_pattern(speciescount, parametercount, propensities, parameters)    
     propensitycount = length(propensities)
-    ModelingToolkit.@variables t, x[1:speciescount](t), alphas[1:propensitycount](t)
+    ModelingToolkit.@variables t, (x(t))[1:speciescount], (alphas(t))[1:propensitycount]
     ModelingToolkit.@parameters p[1:parametercount]
     eqs = Vector{ModelingToolkit.Equation}([])
     for r in 1:propensitycount 

@@ -11,7 +11,7 @@ function solve(model::CmeModel,
     initial_distribution::FspVectorSparse{NS,IntT,RealT},
     tspan::Union{Vector,Tuple},
     ode_method::Union{Nothing,AbstractODEAlgorithm}; 
-    saveat = [], fsptol::AbstractFloat = 1.0E-6, odeatol::AbstractFloat = 1.0E-10, odertol::AbstractFloat = 1.0E-4) where {NS,IntT<:Integer,RealT<:AbstractFloat}
+    saveat = [], fsptol::AbstractFloat = 1.0E-6, odeatol::AbstractFloat = 1.0E-6, odertol::AbstractFloat = 1.0E-4) where {NS,IntT<:Integer,RealT<:AbstractFloat}
 
     statespace = StateSpaceSparse(model.stoich_matrix, initial_distribution.states)
     sink_count = get_sink_count(statespace)
@@ -23,8 +23,8 @@ function solve(model::CmeModel,
         matvec!(du, t, A, u)
         nothing
     end
-    fspprob = ODEProblem(odefun!, u0, tspan, p = model.parameters)
-    solutions = DE.solve(fspprob, ode_method, atol = odeatol, rtol = odertol, saveat = saveat)
+    fspprob = ODEProblem(odefun!, u0, tspan, model.parameters)
+    solutions = DE.solve(fspprob, ode_method, abstol = odeatol, reltol = odertol, saveat = saveat)
 
     output = FspOutputSparse{NS,IntT,RealT}(
         t = Vector{RealT}(),
@@ -106,12 +106,17 @@ function solve(model::CmeModel,
     initial_distribution::FspVectorSparse{NS,IntT,RealT},
     tspan::Tuple{AbstractFloat,AbstractFloat},
     fspalgorithm::AdaptiveFspSparse; saveat = [], fsptol::AbstractFloat = 1.0E-6,
-    odeatol::AbstractFloat = 1.0E-10,
+    odeatol::AbstractFloat = 1.0E-6,
     odertol::AbstractFloat = 1.0E-4,
     verbose::Bool = false) where {NS,IntT<:Integer,RealT<:AbstractFloat}
 
     tstart = min(tspan...)
     tend = max(tspan...)
+    if typeof(saveat) <: Number
+        _saveat = tspan[1]:saveat:tspan[2]
+    else
+        _saveat = saveat
+    end
     adapter = fspalgorithm.space_adapter
 
     p0 = deepcopy(initial_distribution.values)
@@ -150,8 +155,8 @@ function solve(model::CmeModel,
             abstol = eps()        
             )
 
-        fspprob = DE.ODEProblem(fsprhs!, unow, (tnow, tend), p = model.parameters)
-        integrator = DE.init(fspprob, fspalgorithm.ode_method, atol = odeatol, rtol = odertol, callback = fsp_cb, saveat = saveat)
+        fspprob = DE.ODEProblem(fsprhs!, unow, (tnow, tend), model.parameters)
+        integrator = DE.init(fspprob, fspalgorithm.ode_method, abstol = odeatol, reltol = odertol, callback = fsp_cb, saveat = _saveat)
 
         DE.step!(integrator, tend - tnow, true)
 
