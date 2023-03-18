@@ -161,8 +161,8 @@ function solve(model::CmeModelWithSensitivity,
             abstol = eps()
         )
 
-        fsensfspprob = DE.ODEProblem(sensfsprhs!, unow, (tnow, tend), p = get_parameters(model))
-        integrator = DE.init(fsensfspprob, sensfspalgorithm.ode_method, atol = odeatol, rtol = odertol, callback = fsp_cb, saveat = saveat, progress=true)
+        fsensfspprob = DE.ODEProblem(sensfsprhs!, unow, (tnow, tend), get_parameters(model))
+        integrator = DE.init(fsensfspprob, sensfspalgorithm.ode_method, abstol = odeatol, reltol = odertol, callback = fsp_cb, saveat = saveat, progress=true)
         DE.step!(integrator, tend - tnow, true)        
 
         for (t, u) in zip(integrator.sol.t, integrator.sol.u)

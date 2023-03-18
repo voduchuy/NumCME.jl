@@ -42,9 +42,9 @@ expand!(𝔛, 2)
 @test size(𝐀, 1) == get_state_count(𝔛) + get_sink_count(𝔛)
 @test size(𝐀, 2) == get_state_count(𝔛) + get_sink_count(𝔛)
 𝐯 = ones(Float64, size(𝐀, 1))
-𝐰 = 𝐀(1.0) * 𝐯
+𝐰 = matvec(1.0, 𝐀, 𝐯)
 @test sum(𝐰) ≈ 0.0 atol = 1.0e-14
-𝐰 = 𝐀 * 𝐯
+𝐰 = matvec(0.0, 𝐀, 𝐯)
 @test sum(𝐰) ≈ 0.0 atol = 1.0e-14
 
 # Test mat-vec for time-varying matrix
@@ -54,15 +54,15 @@ A1 = FspMatrixSparse(𝔛, propensities_tv, parameters=θ)
 @test size(A1, 1) == get_state_count(𝔛) + get_sink_count(𝔛)
 @test size(A1, 2) == get_state_count(𝔛) + get_sink_count(𝔛)
 𝐯 = ones(Float64, size(A1, 1))
-w1 = A1(1.0) * 𝐯
+w1 = matvec(1.0, A1, 𝐯)
 @test sum(w1) ≈ 0.0 atol = 1.0e-14
-w1 = A1 * 𝐯
+w1 = matvec(0.0, A1, 𝐯)
 @test sum(w1) ≈ 0.0 atol = 1.0e-14
 
 A2 = FspMatrixSparse(𝔛, propensities_tvj, parameters=θ)
-w2 = A2(1.0) * 𝐯
+w2 = matvec(1.0, A2, 𝐯)
 @test sum(w2) ≈ 0.0 atol = 1.0e-14
-w2 = A2 * 𝐯
+w2 = matvec(0.0, A2, 𝐯)
 
 @test sum(w2) ≈ 0.0 atol = 1.0e-14
 @test norm(w1 -w2) ≈ 0

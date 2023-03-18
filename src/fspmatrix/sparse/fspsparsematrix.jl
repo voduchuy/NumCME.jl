@@ -257,10 +257,6 @@ function matvec(t, A::FspMatrixSparse, v)
     return w
 end
 
-function (A::FspMatrixSparse)(t::AbstractFloat)
-    return (t, A)
-end
-
 import Base: *
 
 function *(A::FspMatrixSparse, v::Vector{RealT}) where {RealT<:AbstractFloat}

@@ -27,13 +27,13 @@ end
 
 cmemodel1 = CmeModel(𝕊, [a1,a2,a3,a4], θ)
 
-@parameters k01 k10 α γ
+# @parameters k01 k10 α γ
 rn = @reaction_network begin
     k01, G0 --> G1
     k10, G1 --> G0
     α, G1 --> G1 + RNA
     γ*max(0.0, 1.0 - sin(π * t / L)), RNA --> ∅
-end k01 k10 α γ L
+end 
 
 cmemodel2 = CmeModel(rn, θ)
 @test get_species_count(cmemodel2) == 3

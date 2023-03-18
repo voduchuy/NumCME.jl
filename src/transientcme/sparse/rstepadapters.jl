@@ -1,3 +1,4 @@
+using SciMLBase: get_du!
 
 export RStepAdapter, SelectiveRStepAdapter
 
@@ -97,9 +98,9 @@ function adapt!(statespace::StateSpaceSparse, adapter::SelectiveRStepAdapter,
         deleteat!(p, dropids)
     end
     sink_count = get_sink_count(statespace)
-    du = similar(integrator.u)
-    f! = integrator.f
-    f!(du, integrator.u, [], t)
+    du = similar(integrator.u)    
+    get_du!(du, integrator)
+
     dsinks = du[end-sink_count+1:end]
     expandreactions = findall(dsinks .> 0)
     nold = get_state_count(statespace)
