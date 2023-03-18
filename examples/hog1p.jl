@@ -13,7 +13,7 @@ function Hog1p(t)
     signal = Ahog * (u / (1.0 + u / Mhog))^η
     return signal 
 end
-@parameters k01, k10, a, k12, k21, k23, k32, λ0, λ1, λ2, λ3, ktrans, γnuc, γcyt
+
 rn = @reaction_network begin 
     k01, G0 --> G1
     max(0, k10 - a*Hog1p(t)), G1 --> G0 
@@ -28,7 +28,7 @@ rn = @reaction_network begin
     γnuc, RNAnuc --> ∅
     ktrans, RNAnuc --> RNAcyt 
     γcyt, RNAcyt --> ∅
-end k01 k10 a k12 k21 k23 k32 λ0 λ1 λ2 λ3 γnuc ktrans γcyt
+end 
 
 param_values = Dict([
 k01=> 2.6e-3,

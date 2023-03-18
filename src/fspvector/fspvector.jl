@@ -21,7 +21,7 @@ get_statedict(v::FspVectorSparse) = v.state2idx
 nnz(p::FspVectorSparse) = length(get_states(p))
 
 """
-    FspVectorSparse(states::Vector{MVector{NS, IntT}}, values::Vector{RealT})
+    FspVectorSparse(states::Vector{MVector{NS,IntT}}, values::Vector{RealT}; checksizes::Bool = true) where {NS,IntT<:Integer,RealT<:AbstractFloat}
 
 Construct a sparse representation of a FSP-truncated probability distribution with support `states` and proability values `values`.
 """
@@ -35,7 +35,7 @@ function FspVectorSparse(states::Vector{MVector{NS,IntT}}, values::Vector{RealT}
 end
 
 """
-    FspVectorSparse(statespace::AbstractStateSpaceSparse{NS, NR, IntT}, statevalpairs::Vector{Pair{VecT, RealT}})
+    FspVectorSparse(statespace::AbstractStateSpaceSparse{NS,NR,IntT}, statevalpairs::Vector{Pair{VecT,RealT}}) where {NS,NR,IntT<:Integer,VecT<:AbstractVector,RealT<:AbstractFloat}
 
 Construct a sparse representation of a FSP-truncated probability distribution on the state space `statespace` and proability values `values`.
 """

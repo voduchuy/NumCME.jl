@@ -27,13 +27,13 @@ end
 
 cmemodel1 = CmeModel(𝕊, [a1,a2,a3,a4], θ)
 
-@parameters k01 k10 α γ
+# @parameters k01 k10 α γ
 rn = @reaction_network begin
     k01, G0 --> G1
     k10, G1 --> G0
     α, G1 --> G1 + RNA
     γ*max(0.0, 1.0 - sin(π * t / L)), RNA --> ∅
-end k01 k10 α γ L
+end 
 
 cmemodel2 = CmeModel(rn, θ)
 @test get_species_count(cmemodel2) == 3
@@ -50,7 +50,7 @@ expand!(test_space, 100)
 pass = true 
 for t in test_times 
     for state in get_states(test_space)
-        pass &= cmemodel1.propensities[1](state,θ) ≈ cmemodel2.propensities[1](state,θ)
+        global pass &= cmemodel1.propensities[1](state,θ) ≈ cmemodel2.propensities[1](state,θ)
         pass &= cmemodel1.propensities[2](state,θ) ≈ cmemodel2.propensities[2](state,θ)
         pass &= cmemodel1.propensities[3](state,θ) ≈ cmemodel2.propensities[3](state,θ)
         pass &= cmemodel1.propensities[4](t,state,θ) ≈ cmemodel2.propensities[4](t,state,θ)

@@ -42,13 +42,12 @@ tspan = (0.0, 300.0)
 fspsol1 = solve(model, p0, tspan, fspalgorithm)
 
 # Bursting model definition using Catalyst 
-@parameters k₀₁ k₁₀ λ γ
 bursting_rn = @reaction_network begin 
     k₀₁, G0 --> G1 
     k₁₀, G1 --> G0 
     λ, G1 --> G1 + mRNA 
     γ, mRNA --> ∅
-end k₀₁ k₁₀ λ γ
+end 
 
 parameter_values = [k₀₁ => 0.05, k₁₀ => 0.1, λ => 5.0, γ => 0.5]
 model_from_catalyst = CmeModel(bursting_rn, parameter_values)
@@ -65,6 +64,7 @@ end
 # Which method is faster?
 @btime solve(model, p0, tspan, fspalgorithm);
 @btime solve(model_from_catalyst, p0, tspan, fspalgorithm);
+
 
 
 

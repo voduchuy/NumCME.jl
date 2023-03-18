@@ -5,9 +5,9 @@ function CmeModel(rn::Catalyst.ReactionSystem, parameter_values)
 
     species_ids = Catalyst.speciesmap(rn)
     parameter_ids = Catalyst.paramsmap(rn)
-    𝔖 = Catalyst.netstoichmat(rn)
+    stoich_matrix = Catalyst.netstoichmat(rn)
 
-    jump_rate_laws = [Catalyst.jumpratelaw(eq) for eq in rn.eqs]
+    jump_rate_laws = [Catalyst.jumpratelaw(eq) for eq in Catalyst.get_eqs(rn)]
 
     ## Convert Catalyst jump rate laws into 
     @variables t x[1:species_count] p[1:parameter_count]
@@ -37,5 +37,5 @@ function CmeModel(rn::Catalyst.ReactionSystem, parameter_values)
         end
     end
 
-    return CmeModel(𝔖, converted_propensities, parvec)
+    return CmeModel(stoich_matrix, converted_propensities, parvec)
 end

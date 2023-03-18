@@ -145,7 +145,9 @@ function solve(model::CmeModelWithSensitivity,
         function affect!(integrator)
             DE.terminate!(integrator)
         end
-        # Error constraint for the intermediate solutions. The intermediate sinks must not grow beyond a linear function of time that reaches `fsptol` at the end time
+        # Error constraint for the intermediate solutions. 
+        # The intermediate sinks must not grow beyond a linear function 
+        # of time that reaches `fsptol` at the end time
         function fsp_error_constraint(u, t, integrator)
             sinks = u[n-sink_count+1:n]
             return sum(sinks) - fsptol * t / tend
@@ -159,8 +161,8 @@ function solve(model::CmeModelWithSensitivity,
             abstol = eps()
         )
 
-        fsensfspprob = DE.ODEProblem(sensfsprhs!, unow, (tnow, tend), p = get_parameters(model))
-        integrator = DE.init(fsensfspprob, sensfspalgorithm.ode_method, atol = odeatol, rtol = odertol, callback = fsp_cb, saveat = saveat, progress=true)
+        fsensfspprob = DE.ODEProblem(sensfsprhs!, unow, (tnow, tend), get_parameters(model))
+        integrator = DE.init(fsensfspprob, sensfspalgorithm.ode_method, abstol = odeatol, reltol = odertol, callback = fsp_cb, saveat = saveat, progress=true)
         DE.step!(integrator, tend - tnow, true)        
 
         for (t, u) in zip(integrator.sol.t, integrator.sol.u)
