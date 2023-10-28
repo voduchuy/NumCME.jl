@@ -32,7 +32,7 @@ rn = @reaction_network begin
     k10, G1 --> G0
     α, G1 --> G1 + RNA
     γ*max(0.0, 1.0 - sin(π * t / L)), RNA --> ∅
-end k01 k10 α γ L
+end 
 
 cmemodel2 = CmeModel(rn, θ)
 @test get_species_count(cmemodel2) == 3
