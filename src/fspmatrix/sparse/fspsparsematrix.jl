@@ -263,8 +263,4 @@ function *(A::FspMatrixSparse, v::Vector{RealT}) where {RealT<:AbstractFloat}
     return matvec(0.0, A, v)
 end
 
-#=
-Interface to DifferentialEquations.jl's Linear operator 
-=#
-# mutable struct FspDiffEqOperator <: AbstractDiffEqOperator
-# end
+

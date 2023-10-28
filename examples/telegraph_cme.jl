@@ -28,11 +28,11 @@ a4 = propensity() do x, p
     p[4] * x[3]
 end
 
-k₀₁ = 0.05
-k₁₀ = 0.1
-λ = 5.0
-γ = 0.5
-θ = [k₀₁, k₁₀, λ, γ]
+k01 = 0.05
+k10 = 0.1
+lbda = 5.0
+gamma = 0.5
+θ = [k01, k10, lbda, gamma]
 
 model = CmeModel(𝕊, [a1, a2, a3, a4], θ)
 
@@ -42,12 +42,13 @@ tspan = (0.0, 300.0)
 fspsol1 = solve(model, p0, tspan, fspalgorithm)
 
 # Bursting model definition using Catalyst 
+@parameters k₀₁ k₁₀ λ γ
 bursting_rn = @reaction_network begin 
     k₀₁, G0 --> G1 
     k₁₀, G1 --> G0 
     λ, G1 --> G1 + mRNA 
     γ, mRNA --> ∅
-end 
+end k₀₁ k₁₀ λ γ
 
 parameter_values = [k₀₁ => 0.05, k₁₀ => 0.1, λ => 5.0, γ => 0.5]
 model_from_catalyst = CmeModel(bursting_rn, parameter_values)
