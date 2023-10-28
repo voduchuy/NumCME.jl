@@ -1,6 +1,6 @@
 using Documenter, NumCME 
 
-makedocs(sitename="𝕹𝖚𝖒ℂ𝕄𝔼",
+makedocs(sitename="NumCME",
         authors="Huy Vo",
         doctest=false,
         clean=true,
